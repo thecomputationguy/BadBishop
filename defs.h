@@ -19,6 +19,12 @@ typedef unsigned long long U64; // Custom type for the pieces
 #define NAME "Bad Bishop 1.0"
 #define BRD_SQ_NUM 120
 
+#define SQ64(sq120) (Sq120ToSq64[(sq120)]) // Converts a square from 120-square board to 64-square board
+#define SQ120(sq64) (Sq64ToSq120[(sq64)]) // Converts a square from 64-square board to 120-square board
+
+extern int FilesBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding file (A-H)
+extern int RanksBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding rank (1-8)
+
 // Board pieces for black (b) and white (w).
 // P -> Pawn, N -> Knight, B -> Bishop, R -> Rook, Q -> Queen, K -> King
 enum { EMPTY, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK }; 
@@ -51,7 +57,7 @@ enum {
     A5 = 61, B5, C5, D5, E5, F5, G5, H5,
     A6 = 71, B6, C6, D6, E6, F6, G6, H6,
     A7 = 81, B7, C7, D7, E7, F7, G7, H7,
-    A8 = 91, B8, C8, D8, E8, F8, G8, H8, NO_SQ
+    A8 = 91, B8, C8, D8, E8, F8, G8, H8, NO_SQ, OFFBOARD
 };
 
 enum { FALSE, TRUE};
@@ -77,6 +83,12 @@ typedef struct {
     int majPce[3];          // Count of major pieces (Rooks, Queens)
     int minPce[3];          // Count of minor pieces (Knights, Bishops)
 } S_BOARD;
+
+extern int Sq120ToSq64[BRD_SQ_NUM]; // Maps 120-square board to 64-square board
+extern int Sq64ToSq120[64];         // Maps 64-square board to 120-square board
+
+void AllInit(void); // Initializes all the necessary data structures for the chess engine
+
 
 #endif /* DEFS_H */
 
