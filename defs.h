@@ -1,16 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/* 
- * File:   defs.h
- * Author: rahul
- *
- * Created on January 29, 2019, 7:58 PM
- */
-
 #ifndef DEFS_H
 #define DEFS_H
 
@@ -21,6 +8,12 @@ typedef unsigned long long U64; // Custom type for the pieces
 
 #define SQ64(sq120) (Sq120ToSq64[(sq120)]) // Converts a square from 120-square board to 64-square board
 #define SQ120(sq64) (Sq64ToSq120[(sq64)]) // Converts a square from 64-square board to 120-square board
+
+#define SETBIT(bb, sq) ((bb) |= (1ULL << (sq))) // Sets a bit in the bitboard
+#define CLRBIT(bb, sq) ((bb) &= ~(1ULL << (sq))) // Clears a bit in the bitboard
+void PrintBitBoard(U64 bb);
+int CountBits(U64 bb); // Counts the number of set bits in the bitboard
+int PopBit(U64 *bb); // Pops the least significant bit from the bitboard and returns its index
 
 extern int FilesBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding file (A-H)
 extern int RanksBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding rank (1-8)
