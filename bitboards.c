@@ -26,7 +26,7 @@ void PrintBitBoard(U64 bb) {
     printf("\n   a b c d e f g h\n\n");
 }
 
-int CountBits(U64 bb){
+int CountBits(U64 bb) {
     /*
     Counts the number of set bits in the bitboard using Kernighan's Algorithm.
     */

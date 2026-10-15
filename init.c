@@ -33,7 +33,7 @@ static void InitSq120To64(void){
     }
 }
 
-static void InitFilesRanksBrd(){
+static void InitFilesRanksBrd() {
     int index = 0;
     int file = FILE_A;
     int rank = RANK_1;
@@ -56,7 +56,8 @@ static void InitFilesRanksBrd(){
     }
 }
 
-void AllInit(void){
+void AllInit(void) {
     InitSq120To64(); // Initialize the square mapping arrays
     InitFilesRanksBrd(); // Initialize the file and rank mapping arrays
+    InitHashKeys(); // Initialize the Zobrist hash keys
 }

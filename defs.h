@@ -68,6 +68,8 @@ typedef struct {
          
     int ply;                // Depth of search in the current tree branch
     int hisPly;             // Total half-moves played in the whole game
+
+    int castlePerm;         // Castling permissions encoded as a 4-bit integer:
          
     U64 posKey;             // 64-bit Zobrist hash of the current position
          
@@ -79,6 +81,13 @@ typedef struct {
 
 extern int Sq120ToSq64[BRD_SQ_NUM]; // Maps 120-square board to 64-square board
 extern int Sq64ToSq120[64];         // Maps 64-square board to 120-square board
+
+extern U64 PieceKeys[13][120]; // Zobrist keys for each piece type on each square
+extern U64 SideKey; // Zobrist key for the side to move
+extern U64 CastleKeys[16]; // Zobrist keys for each possible castling rights combination
+
+void InitHashKeys(void); // Initializes the Zobrist hash keys for pieces, side, and castling rights
+U64 GeneratePosKey(const S_BOARD *pos); // Generates a unique 64-bit hash key for the current board position
 
 void AllInit(void); // Initializes all the necessary data structures for the chess engine
 
