@@ -11,6 +11,9 @@ typedef unsigned long long U64; // Custom type for the pieces
 
 #define SETBIT(bb, sq) ((bb) |= (1ULL << (sq))) // Sets a bit in the bitboard
 #define CLRBIT(bb, sq) ((bb) &= ~(1ULL << (sq))) // Clears a bit in the bitboard
+
+#define FR2SQ(f, r) ((21 + (f)) + ((r) * 10)) // Converts file and rank to a square index in the 120-square board
+
 void PrintBitBoard(U64 bb);
 int CountBits(U64 bb); // Counts the number of set bits in the bitboard
 int PopBit(U64 *bb); // Pops the least significant bit from the bitboard and returns its index
@@ -23,6 +26,7 @@ extern int RanksBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to 
 enum { EMPTY, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK }; 
 enum { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H, FILE_NONE }; // Names of files along the board (A-H)
 enum { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NONE }; // Names of ranks along the board (1-8)
+enum { WKCA = 1, WQCA = 2, BKCA = 4, BQCA = 8 }; // Castling permissions
 enum { WHITE, BLACK, BOTH}; // Player name (whose turn is it to move)
 
 // Board structure (A-H: Files and 1-8: Ranks)
@@ -74,7 +78,7 @@ typedef struct {
     U64 posKey;             // 64-bit Zobrist hash of the current position
          
     int pceNum[13];         // Count of each piece type currently alive
-    int big[3];             // Count of non-pawn pieces
+    int bigPce[3];             // Count of non-pawn pieces
     int majPce[3];          // Count of major pieces (Rooks, Queens)
     int minPce[3];          // Count of minor pieces (Knights, Bishops)
 } S_BOARD;
@@ -88,6 +92,9 @@ extern U64 CastleKeys[16]; // Zobrist keys for each possible castling rights com
 
 void InitHashKeys(void); // Initializes the Zobrist hash keys for pieces, side, and castling rights
 U64 GeneratePosKey(const S_BOARD *pos); // Generates a unique 64-bit hash key for the current board position
+
+void ResetBoard(S_BOARD *pos); // Resets the board to an empty state
+void PrintBoard(const S_BOARD *pos); // Prints the current board state in a human-readable format
 
 void AllInit(void); // Initializes all the necessary data structures for the chess engine
 

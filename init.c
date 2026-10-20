@@ -13,17 +13,17 @@ static void InitSq120To64(void){
     int sq64 = 0; // Starting square in 64-square board
 
     // Reset all 120 squares to an invalid index (65)
-    for(index = 0; index < BRD_SQ_NUM; index++){
+    for(index = 0; index < BRD_SQ_NUM; index++) {
         Sq120ToSq64[index] = 65; // Invalid value for squares not on the board
     }
 
     // Reset all 64 squares to an invalid square (120)
-    for(index = 0; index < 64; index++){
+    for(index = 0; index < 64; index++) {
         Sq64ToSq120[index] = 120; // Invalid value for squares not on the board
     }
 
     // Populate the mapping arrays for valid squares on the board
-    for(rank = RANK_1; rank <= RANK_8; rank++){
+    for(rank = RANK_1; rank <= RANK_8; rank++) {
         for(file = FILE_A; file <= FILE_H; file++){
             sq = 21 + file + (rank * 10); // Calculate the square index in 120-square board
             Sq64ToSq120[sq64] = sq; // Map 64-square index to 120-square index
@@ -41,13 +41,13 @@ static void InitFilesRanksBrd() {
     int sq64 = 0; // Starting square in 64-square board
 
     // Reset all 120 squares to an invalid index (65)
-    for(index = 0; index < BRD_SQ_NUM; index++){
+    for(index = 0; index < BRD_SQ_NUM; index++) {
         FilesBrd[index] = OFFBOARD; // Invalid value for squares not on the board
         RanksBrd[index] = OFFBOARD; // Invalid value for squares not on the board
     }
 
     // Populate the mapping arrays for valid squares on the board
-    for(rank = RANK_1; rank <= RANK_8; rank++){
+    for(rank = RANK_1; rank <= RANK_8; rank++) {
         for(file = FILE_A; file <= FILE_H; file++){
             sq = 21 + file + (rank * 10); // Calculate the square index in 120-square board
             FilesBrd[sq] = file; // Map 120-square index to file
