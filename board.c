@@ -82,6 +82,161 @@ void ResetBoard(S_BOARD *pos) {
     pos->hisPly = 0; // Reset total half-moves played
     pos->castlePerm = 0; // No castling rights
     pos->posKey = 0ULL; // Reset position key
+
+    // 6. Reset piece list
+    for (index = 0; index < 13; ++index) {
+        int j;
+        for (j = 0; j < 10; ++j) {
+            pos->pList[index][j] = NO_SQ;
+        }
+    }
+}
+
+#include <stdio.h>
+#include "defs.h"
+
+int CheckBoard(const S_BOARD *pos) {
+    /*
+    Validates the board state for consistency and correctness.
+    */
+    int t_pceNum[13] = { 0 };
+    int t_bigPce[3] = { 0 };
+    int t_majPce[3] = { 0 };
+    int t_minPce[3] = { 0 };
+    int t_material[3] = { 0 };
+
+    int sq64, t_piece, t_pce_num, sq120, colour, pcount;
+
+    U64 t_pawns[3] = { 0ULL, 0ULL, 0ULL };
+
+    t_pawns[WHITE] = pos->pawns[WHITE];
+    t_pawns[BLACK] = pos->pawns[BLACK];
+    t_pawns[BOTH]  = pos->pawns[BOTH];
+
+    // 1. Audit piece counts, bitboards, and materials from square array
+    for (sq64 = 0; sq64 < 64; ++sq64) {
+        sq120 = SQ120(sq64);
+        t_piece = pos->pieces[sq120];
+        t_pceNum[t_piece]++;
+        colour = PieceCol[t_piece];
+
+        if (PieceBig[t_piece] == TRUE) t_bigPce[colour]++;
+        if (PieceMin[t_piece] == TRUE) t_minPce[colour]++;
+        if (PieceMaj[t_piece] == TRUE) t_majPce[colour]++;
+
+        t_material[colour] += PieceVal[t_piece];
+        t_material[BOTH]   += PieceVal[t_piece];
+    }
+
+    // 2. Validate piece counts
+    for (t_piece = wP; t_piece <= bK; ++t_piece) {
+        if (t_pceNum[t_piece] != pos->pceNum[t_piece]) {
+            printf("Error: pceNum mismatch on piece %d\n", t_piece);
+            return FALSE;
+        }
+    }
+
+    // 3. Validate pawn bitboard counts
+    pcount = CountBits(t_pawns[WHITE]);
+    if (pcount != pos->pceNum[wP]) {
+        printf("Error: White pawn bitboard count mismatch\n");
+        return FALSE;
+    }
+    pcount = CountBits(t_pawns[BLACK]);
+    if (pcount != pos->pceNum[bP]) {
+        printf("Error: Black pawn bitboard count mismatch\n");
+        return FALSE;
+    }
+    pcount = CountBits(t_pawns[BOTH]);
+    if (pcount != (pos->pceNum[wP] + pos->pceNum[bP])) {
+        printf("Error: Combined pawn bitboard count mismatch\n");
+        return FALSE;
+    }
+
+    // 4. Validate pawn bitboard square positions
+    while (t_pawns[WHITE]) {
+        sq64 = PopBit(&t_pawns[WHITE]);
+        if (pos->pieces[SQ120(sq64)] != wP) {
+            printf("Error: White pawn bit mismatch on sq %d\n", sq64);
+            return FALSE;
+        }
+    }
+    while (t_pawns[BLACK]) {
+        sq64 = PopBit(&t_pawns[BLACK]);
+        if (pos->pieces[SQ120(sq64)] != bP) {
+            printf("Error: Black pawn bit mismatch on sq %d\n", sq64);
+            return FALSE;
+        }
+    }
+    while (t_pawns[BOTH]) {
+        sq64 = PopBit(&t_pawns[BOTH]);
+        if (pos->pieces[SQ120(sq64)] != wP && pos->pieces[SQ120(sq64)] != bP) {
+            printf("Error: Combined pawn bit mismatch on sq %d\n", sq64);
+            return FALSE;
+        }
+    }
+
+    // 5. Validate material and piece type counters
+    if (t_material[WHITE] != pos->material[WHITE] ||
+        t_material[BLACK] != pos->material[BLACK] ||
+        t_material[BOTH]  != pos->material[BOTH]) {
+        printf("Error: Material balance mismatch\n");
+        return FALSE;
+    }
+
+    if (t_minPce[WHITE] != pos->minPce[WHITE] ||
+        t_minPce[BLACK] != pos->minPce[BLACK] ||
+        t_majPce[WHITE] != pos->majPce[WHITE] ||
+        t_majPce[BLACK] != pos->majPce[BLACK] ||
+        t_bigPce[WHITE] != pos->bigPce[WHITE] ||
+        t_bigPce[BLACK] != pos->bigPce[BLACK]) {
+        printf("Error: Piece category count mismatch\n");
+        return FALSE;
+    }
+
+    // 6. Validate side to move
+    if (pos->side != WHITE && pos->side != BLACK) {
+        printf("Error: Invalid active side: %d\n", pos->side);
+        return FALSE;
+    }
+
+    // 7. Validate position hash key
+    if (GeneratePosKey(pos) != pos->posKey) {
+        printf("Error: Hash key mismatch\n");
+        return FALSE;
+    }
+
+    // 8. Validate en-passant square
+    if (pos->enPas != NO_SQ) {
+        if ((pos->side == WHITE && (RanksBrd[pos->enPas] != RANK_6)) ||
+            (pos->side == BLACK && (RanksBrd[pos->enPas] != RANK_3))) {
+            printf("Error: Invalid en-passant square rank: %d\n", pos->enPas);
+            return FALSE;
+        }
+    }
+
+    // 9. Validate kings on board
+    if (pos->pieces[pos->KingSq[WHITE]] != wK) {
+        printf("Error: White king square corrupted\n");
+        return FALSE;
+    }
+    if (pos->pieces[pos->KingSq[BLACK]] != bK) {
+        printf("Error: Black king square corrupted\n");
+        return FALSE;
+    }
+
+    // 10. Validate piece list consistency
+    for (t_piece = wP; t_piece <= bK; ++t_piece) {
+        for (t_pce_num = 0; t_pce_num < pos->pceNum[t_piece]; ++t_pce_num) {
+            sq120 = pos->pList[t_piece][t_pce_num];
+            if (pos->pieces[sq120] != t_piece) {
+                printf("Error: Piece list mismatch for piece %d at sq120 %d\n", t_piece, sq120);
+                return FALSE;
+            }
+        }
+    }
+
+    return TRUE;
 }
 
 int ParseFen(const char *fen, S_BOARD *pos) {
@@ -196,6 +351,9 @@ int ParseFen(const char *fen, S_BOARD *pos) {
 
             pos->material[color] += PieceVal[piece];
             pos->material[BOTH]  += PieceVal[piece]; // Total on-board material
+
+            // Update piece list and piece count
+            pos->pList[piece][pos->pceNum[piece]] = sq120;
             pos->pceNum[piece]++;
 
             if (piece == wK) pos->KingSq[WHITE] = sq120;

@@ -83,6 +83,8 @@ typedef struct {
     int majPce[3];          // Count of major pieces (Rooks, Queens)
     int minPce[3];          // Count of minor pieces (Knights, Bishops)
     int material[3];        // Material value for each side (WHITE, BLACK, BOTH)
+
+    int pList[13][10]; // Piece list for each piece type (0-12) and their positions on the board (up to 10 pieces of each type)
 } S_BOARD;
 
 extern int Sq120ToSq64[BRD_SQ_NUM]; // Maps 120-square board to 64-square board
@@ -103,6 +105,7 @@ U64 GeneratePosKey(const S_BOARD *pos); // Generates a unique 64-bit hash key fo
 void ResetBoard(S_BOARD *pos); // Resets the board to an empty state
 void PrintBoard(const S_BOARD *pos); // Prints the current board state in a human-readable format
 int ParseFen(const char *fen, S_BOARD *pos); // Parses a FEN string and sets up the board accordingly
+int CheckBoard(const S_BOARD *pos); // Validates the board state for consistency and correctness
 
 void AllInit(void); // Initializes all the necessary data structures for the chess engine
 
