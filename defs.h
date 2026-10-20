@@ -13,6 +13,7 @@ typedef unsigned long long U64; // Custom type for the pieces
 #define CLRBIT(bb, sq) ((bb) &= ~(1ULL << (sq))) // Clears a bit in the bitboard
 
 #define FR2SQ(f, r) ((21 + (f)) + ((r) * 10)) // Converts file and rank to a square index in the 120-square board
+#define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" // Starting position in Forsyth-Edwards Notation (FEN)
 
 void PrintBitBoard(U64 bb);
 int CountBits(U64 bb); // Counts the number of set bits in the bitboard
@@ -78,9 +79,10 @@ typedef struct {
     U64 posKey;             // 64-bit Zobrist hash of the current position
          
     int pceNum[13];         // Count of each piece type currently alive
-    int bigPce[3];             // Count of non-pawn pieces
+    int bigPce[3];          // Count of non-pawn pieces
     int majPce[3];          // Count of major pieces (Rooks, Queens)
     int minPce[3];          // Count of minor pieces (Knights, Bishops)
+    int material[3];        // Material value for each side (WHITE, BLACK, BOTH)
 } S_BOARD;
 
 extern int Sq120ToSq64[BRD_SQ_NUM]; // Maps 120-square board to 64-square board
@@ -89,12 +91,18 @@ extern int Sq64ToSq120[64];         // Maps 64-square board to 120-square board
 extern U64 PieceKeys[13][120]; // Zobrist keys for each piece type on each square
 extern U64 SideKey; // Zobrist key for the side to move
 extern U64 CastleKeys[16]; // Zobrist keys for each possible castling rights combination
+extern const int PieceBig[13]; // Indicates whether a piece is a "big" piece (non-pawn)
+extern const int PieceMaj[13]; // Indicates whether a piece is a "major" piece (Rook or Queen)
+extern const int PieceMin[13]; // Indicates whether a piece is a "minor" piece (Knight or Bishop)
+extern const int PieceVal[13]; // Material value of each piece type
+extern const int PieceCol[13]; // Color of each piece type (WHITE, BLACK, or BOTH)
 
 void InitHashKeys(void); // Initializes the Zobrist hash keys for pieces, side, and castling rights
 U64 GeneratePosKey(const S_BOARD *pos); // Generates a unique 64-bit hash key for the current board position
 
 void ResetBoard(S_BOARD *pos); // Resets the board to an empty state
 void PrintBoard(const S_BOARD *pos); // Prints the current board state in a human-readable format
+int ParseFen(const char *fen, S_BOARD *pos); // Parses a FEN string and sets up the board accordingly
 
 void AllInit(void); // Initializes all the necessary data structures for the chess engine
 

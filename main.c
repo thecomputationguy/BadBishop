@@ -1,22 +1,22 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "defs.h"
 
 int main(void) {
     AllInit();
 
     S_BOARD board[1];
-    ResetBoard(board);
 
-    // Place test pieces
-    board->pieces[E1] = wK;
-    board->pieces[E8] = bK;
-    board->pieces[D4] = wP;
-    board->pieces[E4] = bP;
-    board->side = WHITE;
-    board->castlePerm = WKCA | WQCA | BKCA | BQCA;
-    board->posKey = GeneratePosKey(board);
-
+    // Test 1: Standard Start Position
+    printf("--- Test 1: Start Position ---");
+    ParseFen(START_FEN, board);
     PrintBoard(board);
 
-    return 0;
+    // Test 2: Position with en-passant and partial castling
+    char *fen2 = "r1bqk2r/pp2bppp/2n1pn2/3p4/2PP4/2N2N2/PP2BPPP/R1BQK2R w KQkq d6 0 8";
+    printf("--- Test 2: Middlegame Position ---");
+    ParseFen(fen2, board);
+    PrintBoard(board);
+
+    return EXIT_SUCCESS;
 }

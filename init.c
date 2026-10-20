@@ -5,6 +5,12 @@ int Sq64ToSq120[64];         // Maps 64-square board to 120
 int FilesBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding file (A-H)
 int RanksBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding file (A-H) and rank (1-8)
 
+const int PieceBig[13] = { FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE }; // Indicates whether a piece is a "big" piece (non-pawn)
+const int PieceMaj[13] = { FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE }; // Indicates whether a piece is a "major" piece (Rook or Queen)
+const int PieceMin[13] = { FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE }; // Indicates whether a piece is a "minor" piece (Knight or Bishop)
+const int PieceVal[13] = { 0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000 }; // Material value of each piece type
+const int PieceCol[13] = { BOTH, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK, BLACK, BLACK }; // Color of each piece type (WHITE, BLACK, or BOTH)
+
 static void InitSq120To64(void){
     int index = 0;
     int file = FILE_A;
