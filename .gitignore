@@ -1,1 +1,16 @@
+# Binaries and object files
+*.o
+*.obj
 *.exe
+badbishop
+build/
+bin/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.swp
+
+# Compiler debug dumps
+*.dSYM/
+*.pdb
