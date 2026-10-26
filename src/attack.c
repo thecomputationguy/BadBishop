@@ -1,10 +1,10 @@
 #include "defs.h"
 
 // Direction offset arrays on the 120-square mailbox
-const int KnDir[8] = { -8, -19, -21, -12, 8, 19, 21, 12 };
-const int RkDir[4] = { -1, -10, 1, 10 };
-const int BiDir[4] = { -9, -11, 11, 9 };
-const int KiDir[8] = { -1, -10, 1, 10, -9, -11, 11, 9 };
+const int KnDir[8] = {-8, -19, -21, -12, 8, 19, 21, 12};
+const int RkDir[4] = {-1, -10, 1, 10};
+const int BiDir[4] = {-9, -11, 11, 9};
+const int KiDir[8] = {-1, -10, 1, 10, -9, -11, 11, 9};
 
 int SqAttacked(const int sq, const int side, const S_BOARD *pos) {
     /* Check if a square is attacked by the specified side */

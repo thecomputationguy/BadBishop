@@ -15,6 +15,26 @@ typedef unsigned long long U64; // Custom type for the pieces
 #define FR2SQ(f, r) ((21 + (f)) + ((r) * 10)) // Converts file and rank to a square index in the 120-square board
 #define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" // Starting position in Forsyth-Edwards Notation (FEN)
 
+/* --- GAME MOVE BITPACKING MACROS --- */
+#define FROMSQ(m) ((m) & 0x7F)
+#define TOSQ(m) (((m) >> 7) & 0x7F)
+#define CAPTURED(m) (((m) >> 14) & 0xF)
+#define PROMOTED(m) (((m) >> 20) & 0xF)
+
+#define MFLAGEP 0x40000
+#define MFLAGPS 0x80000
+#define MFLAGCA 0x1000000
+
+#define MFLAGCAP 0x7C000
+#define MFLAGPROM 0xF00000
+
+/* Helper macro to pack a move integer */
+#define MOVE(f, t, ca, pro, fl) ((f) | ((t) << 7) | ((ca) << 14) | ((pro) << 20) | (fl))
+
+/* --- IO.C PROTOTYPES --- */
+char *PrSq(const int sq);
+char *PrMove(const int move);
+
 void PrintBitBoard(U64 bb);
 int CountBits(U64 bb); // Counts the number of set bits in the bitboard
 int PopBit(U64 *bb); // Pops the least significant bit from the bitboard and returns its index
@@ -30,6 +50,7 @@ enum { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NONE
 enum { WKCA = 1, WQCA = 2, BKCA = 4, BQCA = 8 }; // Castling permissions
 enum { WHITE, BLACK, BOTH}; // Player name (whose turn is it to move)
 
+// clang-format off
 // Board structure (A-H: Files and 1-8: Ranks)
 /*
 Row 11:   110  111  112  113  114  115  116  117  118  119   <-- Top off-board border
@@ -47,6 +68,9 @@ Row 0:      0    1    2    3    4    5    6    7    8    9   <-- Bottom off-boar
            ^                                            ^
       Left border                                  Right border
 */
+// clang-format on
+
+// clang-format off
 enum {
     A1 = 21, B1, C1, D1, E1, F1, G1, H1,
     A2 = 31, B2, C2, D2, E2, F2, G2, H2, 
@@ -57,6 +81,7 @@ enum {
     A7 = 81, B7, C7, D7, E7, F7, G7, H7,
     A8 = 91, B8, C8, D8, E8, F8, G8, H8, NO_SQ, OFFBOARD
 };
+// clang-format on
 
 enum { FALSE, TRUE};
 

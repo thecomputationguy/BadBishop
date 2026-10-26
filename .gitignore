@@ -10,6 +10,7 @@ bin/
 .vscode/
 .idea/
 *.swp
+.clang-format
 
 # Compiler debug dumps
 *.dSYM/

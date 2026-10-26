@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "defs.h"
+#include <stdio.h>
 
 void PrintBitBoard(U64 bb) {
     /* Print the bitboard in a human-readable format */
@@ -13,7 +13,7 @@ void PrintBitBoard(U64 bb) {
         printf("%d  ", rank + 1); // Print rank number (1-8)
         for (file = FILE_A; file <= FILE_H; ++file) {
             sq = (21 + file) + (rank * 10); // 120-square coordinate
-            sq64 = SQ64(sq);               // Convert to 64-square coordinate
+            sq64 = SQ64(sq);                // Convert to 64-square coordinate
 
             if ((1ULL << sq64) & bb) {
                 printf("X ");
@@ -31,7 +31,7 @@ int CountBits(U64 bb) {
     Counts the number of set bits in the bitboard using Kernighan's Algorithm.
     */
     int count = 0;
-    while(bb){
+    while (bb) {
         bb &= (bb - 1); // Clear the least significant bit
         count++;
     }
@@ -45,7 +45,8 @@ int PopBit(U64 *bb) {
     U64 b = *bb ^ (*bb - 1);
     unsigned int fold = (unsigned int)((b & 0xffffffff) ^ (b >> 32));
     *bb &= (*bb - 1);
-    
-    // TODO: De Bruijn-like or table lookup mapping, but standard builtin / count-trailing-zeros is fast and portable
+
+    // TODO: De Bruijn-like or table lookup mapping, but standard builtin / count-trailing-zeros is
+    // fast and portable
     return CountBits(b - 1);
 }

@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include "defs.h"
+#include <stdlib.h>
 
 U64 PieceKeys[13][120];
 U64 SideKey;
@@ -7,7 +7,8 @@ U64 CastleKeys[16];
 
 static U64 Rand64(void) {
     /*
-    Generates a random 64-bit number by combining multiple calls to rand() and shifting the bits appropriately.
+    Generates a random 64-bit number by combining multiple calls to rand() and shifting the bits
+    appropriately.
     */
     U64 r = 0ULL;
     r |= ((U64)rand() & 0x7FFF);

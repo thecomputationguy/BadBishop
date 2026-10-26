@@ -22,6 +22,7 @@ set(ENGINE_SOURCES
     src/hashkeys.c
     src/board.c
     src/attack.c
+    src/io.c
 )
 
 # Main Executable

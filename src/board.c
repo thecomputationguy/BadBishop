@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "defs.h"
+#include <stdio.h>
 
 const char PceChar[] = ".PNBRQKpnbrqk";
 const char SideChar[] = "wb-";
@@ -7,7 +7,8 @@ const char SideChar[] = "wb-";
 void PrintBoard(const S_BOARD *pos) {
     /*
     Prints the current board state in a human-readable format.
-    Displays the board with ranks and files, along with the side to move, en passant square, castling rights, and the position key.
+    Displays the board with ranks and files, along with the side to move, en passant square,
+    castling rights, and the position key.
     */
     int sq, file, rank, piece;
 
@@ -31,13 +32,10 @@ void PrintBoard(const S_BOARD *pos) {
 
     printf("side: %c\n", SideChar[pos->side]);
     printf("enPas: %d\n", pos->enPas);
-    printf("castle: %c%c%c%c\n",
-           pos->castlePerm & WKCA ? 'K' : '-',
-           pos->castlePerm & WQCA ? 'Q' : '-',
-           pos->castlePerm & BKCA ? 'k' : '-',
+    printf("castle: %c%c%c%c\n", pos->castlePerm & WKCA ? 'K' : '-',
+           pos->castlePerm & WQCA ? 'Q' : '-', pos->castlePerm & BKCA ? 'k' : '-',
            pos->castlePerm & BQCA ? 'q' : '-');
     printf("posKey: %llX\n\n", pos->posKey);
-
 }
 
 void ResetBoard(S_BOARD *pos) {
@@ -75,13 +73,13 @@ void ResetBoard(S_BOARD *pos) {
     pos->KingSq[BLACK] = NO_SQ;
 
     // 5. Reset board state flags
-    pos->side = BOTH; // No side to move
-    pos->enPas = NO_SQ; // No en passant square
-    pos->fiftyMove = 0; // Reset fifty-move counter
-    pos->ply = 0; // Reset search depth
-    pos->hisPly = 0; // Reset total half-moves played
+    pos->side = BOTH;    // No side to move
+    pos->enPas = NO_SQ;  // No en passant square
+    pos->fiftyMove = 0;  // Reset fifty-move counter
+    pos->ply = 0;        // Reset search depth
+    pos->hisPly = 0;     // Reset total half-moves played
     pos->castlePerm = 0; // No castling rights
-    pos->posKey = 0ULL; // Reset position key
+    pos->posKey = 0ULL;  // Reset position key
 
     // 6. Reset piece list
     for (index = 0; index < 13; ++index) {
@@ -92,26 +90,26 @@ void ResetBoard(S_BOARD *pos) {
     }
 }
 
-#include <stdio.h>
 #include "defs.h"
+#include <stdio.h>
 
 int CheckBoard(const S_BOARD *pos) {
     /*
     Validates the board state for consistency and correctness.
     */
-    int t_pceNum[13] = { 0 };
-    int t_bigPce[3] = { 0 };
-    int t_majPce[3] = { 0 };
-    int t_minPce[3] = { 0 };
-    int t_material[3] = { 0 };
+    int t_pceNum[13] = {0};
+    int t_bigPce[3] = {0};
+    int t_majPce[3] = {0};
+    int t_minPce[3] = {0};
+    int t_material[3] = {0};
 
     int sq64, t_piece, t_pce_num, sq120, colour, pcount;
 
-    U64 t_pawns[3] = { 0ULL, 0ULL, 0ULL };
+    U64 t_pawns[3] = {0ULL, 0ULL, 0ULL};
 
     t_pawns[WHITE] = pos->pawns[WHITE];
     t_pawns[BLACK] = pos->pawns[BLACK];
-    t_pawns[BOTH]  = pos->pawns[BOTH];
+    t_pawns[BOTH] = pos->pawns[BOTH];
 
     // 1. Audit piece counts, bitboards, and materials from square array
     for (sq64 = 0; sq64 < 64; ++sq64) {
@@ -125,7 +123,7 @@ int CheckBoard(const S_BOARD *pos) {
         if (PieceMaj[t_piece] == TRUE) t_majPce[colour]++;
 
         t_material[colour] += PieceVal[t_piece];
-        t_material[BOTH]   += PieceVal[t_piece];
+        t_material[BOTH] += PieceVal[t_piece];
     }
 
     // 2. Validate piece counts
@@ -177,19 +175,15 @@ int CheckBoard(const S_BOARD *pos) {
     }
 
     // 5. Validate material and piece type counters
-    if (t_material[WHITE] != pos->material[WHITE] ||
-        t_material[BLACK] != pos->material[BLACK] ||
-        t_material[BOTH]  != pos->material[BOTH]) {
+    if (t_material[WHITE] != pos->material[WHITE] || t_material[BLACK] != pos->material[BLACK] ||
+        t_material[BOTH] != pos->material[BOTH]) {
         printf("Error: Material balance mismatch\n");
         return FALSE;
     }
 
-    if (t_minPce[WHITE] != pos->minPce[WHITE] ||
-        t_minPce[BLACK] != pos->minPce[BLACK] ||
-        t_majPce[WHITE] != pos->majPce[WHITE] ||
-        t_majPce[BLACK] != pos->majPce[BLACK] ||
-        t_bigPce[WHITE] != pos->bigPce[WHITE] ||
-        t_bigPce[BLACK] != pos->bigPce[BLACK]) {
+    if (t_minPce[WHITE] != pos->minPce[WHITE] || t_minPce[BLACK] != pos->minPce[BLACK] ||
+        t_majPce[WHITE] != pos->majPce[WHITE] || t_majPce[BLACK] != pos->majPce[BLACK] ||
+        t_bigPce[WHITE] != pos->bigPce[WHITE] || t_bigPce[BLACK] != pos->bigPce[BLACK]) {
         printf("Error: Piece category count mismatch\n");
         return FALSE;
     }
@@ -256,41 +250,65 @@ int ParseFen(const char *fen, S_BOARD *pos) {
     while ((rank >= RANK_1) && *fen) {
         count = 1;
         switch (*fen) {
-            case 'p': piece = bP; break;
-            case 'r': piece = bR; break;
-            case 'n': piece = bN; break;
-            case 'b': piece = bB; break;
-            case 'k': piece = bK; break;
-            case 'q': piece = bQ; break;
-            case 'P': piece = wP; break;
-            case 'R': piece = wR; break;
-            case 'N': piece = wN; break;
-            case 'B': piece = wB; break;
-            case 'K': piece = wK; break;
-            case 'Q': piece = wQ; break;
+        case 'p':
+            piece = bP;
+            break;
+        case 'r':
+            piece = bR;
+            break;
+        case 'n':
+            piece = bN;
+            break;
+        case 'b':
+            piece = bB;
+            break;
+        case 'k':
+            piece = bK;
+            break;
+        case 'q':
+            piece = bQ;
+            break;
+        case 'P':
+            piece = wP;
+            break;
+        case 'R':
+            piece = wR;
+            break;
+        case 'N':
+            piece = wN;
+            break;
+        case 'B':
+            piece = wB;
+            break;
+        case 'K':
+            piece = wK;
+            break;
+        case 'Q':
+            piece = wQ;
+            break;
 
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-                piece = EMPTY;
-                count = *fen - '0';
-                break;
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+            piece = EMPTY;
+            count = *fen - '0';
+            break;
 
-            case '/':
-            case ' ':
-                rank--;
-                file = FILE_A;
-                fen++;
-                continue;
+        case '/':
+        case ' ':
+            rank--;
+            file = FILE_A;
+            fen++;
+            continue;
 
-            default:
-                printf("FEN error on piece character: %c\n", *fen);
-                return -1;
+        default:
+            printf("FEN error on piece character: %c\n", *fen);
+            return -1;
         }
 
         for (i = 0; i < count; ++i) {
@@ -316,12 +334,22 @@ int ParseFen(const char *fen, S_BOARD *pos) {
     for (i = 0; i < 4; ++i) {
         if (*fen == ' ') break;
         switch (*fen) {
-            case 'K': pos->castlePerm |= WKCA; break;
-            case 'Q': pos->castlePerm |= WQCA; break;
-            case 'k': pos->castlePerm |= BKCA; break;
-            case 'q': pos->castlePerm |= BQCA; break;
-            case '-': break;
-            default: break;
+        case 'K':
+            pos->castlePerm |= WKCA;
+            break;
+        case 'Q':
+            pos->castlePerm |= WQCA;
+            break;
+        case 'k':
+            pos->castlePerm |= BKCA;
+            break;
+        case 'q':
+            pos->castlePerm |= BQCA;
+            break;
+        case '-':
+            break;
+        default:
+            break;
         }
         fen++;
     }
@@ -350,7 +378,7 @@ int ParseFen(const char *fen, S_BOARD *pos) {
             if (PieceMaj[piece] == TRUE) pos->majPce[color]++;
 
             pos->material[color] += PieceVal[piece];
-            pos->material[BOTH]  += PieceVal[piece]; // Total on-board material
+            pos->material[BOTH] += PieceVal[piece]; // Total on-board material
 
             // Update piece list and piece count
             pos->pList[piece][pos->pceNum[piece]] = sq120;
