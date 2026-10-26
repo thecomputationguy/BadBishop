@@ -5,6 +5,7 @@
 badbishop
 build/
 bin/
+.cache
 
 # IDE / Editor folders
 .vscode/

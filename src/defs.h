@@ -6,14 +6,19 @@ typedef unsigned long long U64; // Custom type for the pieces
 #define NAME "Bad Bishop 1.0"
 #define BRD_SQ_NUM 120
 
-#define SQ64(sq120) (Sq120ToSq64[(sq120)]) // Converts a square from 120-square board to 64-square board
-#define SQ120(sq64) (Sq64ToSq120[(sq64)]) // Converts a square from 64-square board to 120-square board
+#define SQ64(sq120)                                                                                \
+    (Sq120ToSq64[(sq120)]) // Converts a square from 120-square board to 64-square board
+#define SQ120(sq64)                                                                                \
+    (Sq64ToSq120[(sq64)]) // Converts a square from 64-square board to 120-square board
 
-#define SETBIT(bb, sq) ((bb) |= (1ULL << (sq))) // Sets a bit in the bitboard
+#define SETBIT(bb, sq) ((bb) |= (1ULL << (sq)))  // Sets a bit in the bitboard
 #define CLRBIT(bb, sq) ((bb) &= ~(1ULL << (sq))) // Clears a bit in the bitboard
 
-#define FR2SQ(f, r) ((21 + (f)) + ((r) * 10)) // Converts file and rank to a square index in the 120-square board
-#define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" // Starting position in Forsyth-Edwards Notation (FEN)
+#define FR2SQ(f, r)                                                                                \
+    ((21 + (f)) + ((r) * 10)) // Converts file and rank to a square index in the 120-square board
+#define START_FEN                                                                                  \
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" // Starting position in
+                                                               // Forsyth-Edwards Notation (FEN)
 
 /* --- GAME MOVE BITPACKING MACROS --- */
 #define FROMSQ(m) ((m) & 0x7F)
@@ -31,24 +36,63 @@ typedef unsigned long long U64; // Custom type for the pieces
 /* Helper macro to pack a move integer */
 #define MOVE(f, t, ca, pro, fl) ((f) | ((t) << 7) | ((ca) << 14) | ((pro) << 20) | (fl))
 
+#define MAXPOSITIONMOVES 256
+
+typedef struct {
+    int move;
+    int score;
+} S_MOVE;
+
+typedef struct {
+    S_MOVE moves[MAXPOSITIONMOVES];
+    int count;
+} S_MOVELIST;
+
 /* --- IO.C PROTOTYPES --- */
-char *PrSq(const int sq);
-char *PrMove(const int move);
+char *PrSq(const int sq); // Converts a square index to algebraic notation (e.g., 0 -> "a1")
+char *
+PrMove(const int move); // Converts a move integer to algebraic notation (e.g., 0x123456 -> "e2e4")
+char *PrSq(const int sq); // Converts a square index to algebraic notation (e.g., 0 -> "a1")
+char *
+PrMove(const int move); // Converts a move integer to algebraic notation (e.g., 0x123456 -> "e2e4")
+void PrintMoveList(const S_MOVELIST *list); // Prints a list of moves in algebraic notation
 
 void PrintBitBoard(U64 bb);
 int CountBits(U64 bb); // Counts the number of set bits in the bitboard
-int PopBit(U64 *bb); // Pops the least significant bit from the bitboard and returns its index
+int PopBit(U64 *bb);   // Pops the least significant bit from the bitboard and returns its index
 
-extern int FilesBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding file (A-H)
-extern int RanksBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding rank (1-8)
+extern int FilesBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding
+                                 // file (A-H)
+extern int RanksBrd[BRD_SQ_NUM]; // Maps each square on the 120-square board to its corresponding
+                                 // rank (1-8)
 
 // Board pieces for black (b) and white (w).
 // P -> Pawn, N -> Knight, B -> Bishop, R -> Rook, Q -> Queen, K -> King
-enum { EMPTY, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK }; 
-enum { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H, FILE_NONE }; // Names of files along the board (A-H)
-enum { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NONE }; // Names of ranks along the board (1-8)
+enum { EMPTY, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK };
+enum {
+    FILE_A,
+    FILE_B,
+    FILE_C,
+    FILE_D,
+    FILE_E,
+    FILE_F,
+    FILE_G,
+    FILE_H,
+    FILE_NONE
+}; // Names of files along the board (A-H)
+enum {
+    RANK_1,
+    RANK_2,
+    RANK_3,
+    RANK_4,
+    RANK_5,
+    RANK_6,
+    RANK_7,
+    RANK_8,
+    RANK_NONE
+}; // Names of ranks along the board (1-8)
 enum { WKCA = 1, WQCA = 2, BKCA = 4, BQCA = 8 }; // Castling permissions
-enum { WHITE, BLACK, BOTH}; // Player name (whose turn is it to move)
+enum { WHITE, BLACK, BOTH };                     // Player name (whose turn is it to move)
 
 // clang-format off
 // Board structure (A-H: Files and 1-8: Ranks)
@@ -83,41 +127,42 @@ enum {
 };
 // clang-format on
 
-enum { FALSE, TRUE};
+enum { FALSE, TRUE };
 
 // Core board structure
 typedef struct {
     int pieces[BRD_SQ_NUM]; // Board array indexed 0 to 119
     U64 pawns[3];           // Pawn bitboards: [0]=white, [1]=black, [2]=both
-         
-    int KingSq[2];          // Fast lookup for White and Black king squares
-         
-    int side;               // Whose turn it is (WHITE or BLACK)
-    int enPas;              // Square behind a pawn that just moved 2 squares (or NO_SQ)
-    int fiftyMove;          // Half-move counter for the 50-move draw rule
-         
-    int ply;                // Depth of search in the current tree branch
-    int hisPly;             // Total half-moves played in the whole game
 
-    int castlePerm;         // Castling permissions encoded as a 4-bit integer:
-         
-    U64 posKey;             // 64-bit Zobrist hash of the current position
-         
-    int pceNum[13];         // Count of each piece type currently alive
-    int bigPce[3];          // Count of non-pawn pieces
-    int majPce[3];          // Count of major pieces (Rooks, Queens)
-    int minPce[3];          // Count of minor pieces (Knights, Bishops)
-    int material[3];        // Material value for each side (WHITE, BLACK, BOTH)
+    int KingSq[2]; // Fast lookup for White and Black king squares
 
-    int pList[13][10]; // Piece list for each piece type (0-12) and their positions on the board (up to 10 pieces of each type)
+    int side;      // Whose turn it is (WHITE or BLACK)
+    int enPas;     // Square behind a pawn that just moved 2 squares (or NO_SQ)
+    int fiftyMove; // Half-move counter for the 50-move draw rule
+
+    int ply;    // Depth of search in the current tree branch
+    int hisPly; // Total half-moves played in the whole game
+
+    int castlePerm; // Castling permissions encoded as a 4-bit integer:
+
+    U64 posKey; // 64-bit Zobrist hash of the current position
+
+    int pceNum[13];  // Count of each piece type currently alive
+    int bigPce[3];   // Count of non-pawn pieces
+    int majPce[3];   // Count of major pieces (Rooks, Queens)
+    int minPce[3];   // Count of minor pieces (Knights, Bishops)
+    int material[3]; // Material value for each side (WHITE, BLACK, BOTH)
+
+    int pList[13][10]; // Piece list for each piece type (0-12) and their positions on the board (up
+                       // to 10 pieces of each type)
 } S_BOARD;
 
 extern int Sq120ToSq64[BRD_SQ_NUM]; // Maps 120-square board to 64-square board
 extern int Sq64ToSq120[64];         // Maps 64-square board to 120-square board
 
 extern U64 PieceKeys[13][120]; // Zobrist keys for each piece type on each square
-extern U64 SideKey; // Zobrist key for the side to move
-extern U64 CastleKeys[16]; // Zobrist keys for each possible castling rights combination
+extern U64 SideKey;            // Zobrist key for the side to move
+extern U64 CastleKeys[16];     // Zobrist keys for each possible castling rights combination
 extern const int PieceBig[13]; // Indicates whether a piece is a "big" piece (non-pawn)
 extern const int PieceMaj[13]; // Indicates whether a piece is a "major" piece (Rook or Queen)
 extern const int PieceMin[13]; // Indicates whether a piece is a "minor" piece (Knight or Bishop)
@@ -135,15 +180,18 @@ extern const char SideChar[];
 int SqAttacked(const int sq, const int side, const S_BOARD *pos);
 
 void InitHashKeys(void); // Initializes the Zobrist hash keys for pieces, side, and castling rights
-U64 GeneratePosKey(const S_BOARD *pos); // Generates a unique 64-bit hash key for the current board position
+U64 GeneratePosKey(
+    const S_BOARD *pos); // Generates a unique 64-bit hash key for the current board position
 
-void ResetBoard(S_BOARD *pos); // Resets the board to an empty state
+void ResetBoard(S_BOARD *pos);       // Resets the board to an empty state
 void PrintBoard(const S_BOARD *pos); // Prints the current board state in a human-readable format
-int ParseFen(const char *fen, S_BOARD *pos); // Parses a FEN string and sets up the board accordingly
+int ParseFen(const char *fen,
+             S_BOARD *pos);         // Parses a FEN string and sets up the board accordingly
 int CheckBoard(const S_BOARD *pos); // Validates the board state for consistency and correctness
+void GenerateAllMoves(const S_BOARD *pos,
+                      S_MOVELIST *list); // Generates all possible moves for the current position
+                                         // and stores them in a move list
 
 void AllInit(void); // Initializes all the necessary data structures for the chess engine
 
-
 #endif /* DEFS_H */
-

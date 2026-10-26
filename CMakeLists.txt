@@ -23,6 +23,7 @@ set(ENGINE_SOURCES
     src/board.c
     src/attack.c
     src/io.c
+    src/movegen.c
 )
 
 # Main Executable
