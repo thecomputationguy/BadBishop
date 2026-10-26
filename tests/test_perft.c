@@ -142,6 +142,23 @@ static void test_move_encoding_and_io(void) {
     assert(strcmp(PrMove(m2), "b7a8n") == 0);
 }
 
+static void test_movegen_counts(void) {
+    printf("[7/7] Testing Move Generator Root Counts...\n");
+    S_BOARD board[1];
+    S_MOVELIST list[1];
+
+    // Start FEN has 20 moves
+    ParseFen(START_FEN, board);
+    GenerateAllMoves(board, list);
+    assert(list->count == 20);
+
+    // Kiwipete has 48 moves
+    const char *kiwipete = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    ParseFen(kiwipete, board);
+    GenerateAllMoves(board, list);
+    assert(list->count == 48);
+}
+
 int main(void) {
     AllInit();
 
@@ -151,9 +168,9 @@ int main(void) {
     test_zobrist_determinism();
     test_sq_attacked();
     test_move_encoding_and_io();
-
+    test_movegen_counts();
     printf("\n========================================\n");
-    printf(" ALL 6 UNIT TEST SUITES PASSED CLEANLY! \n");
+    printf(" ALL 7 UNIT TEST SUITES PASSED CLEANLY! \n");
     printf("========================================\n");
     return 0;
 }
