@@ -99,6 +99,16 @@ extern const int PieceMin[13]; // Indicates whether a piece is a "minor" piece (
 extern const int PieceVal[13]; // Material value of each piece type
 extern const int PieceCol[13]; // Color of each piece type (WHITE, BLACK, or BOTH)
 
+// Piece type classification arrays
+extern const int PieceKnight[13];
+extern const int PieceKing[13];
+extern const int PieceRookQueen[13];
+extern const int PieceBishopQueen[13];
+extern const char SideChar[];
+
+// attack.c
+int SqAttacked(const int sq, const int side, const S_BOARD *pos);
+
 void InitHashKeys(void); // Initializes the Zobrist hash keys for pieces, side, and castling rights
 U64 GeneratePosKey(const S_BOARD *pos); // Generates a unique 64-bit hash key for the current board position
 

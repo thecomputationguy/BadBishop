@@ -1,21 +1,39 @@
 #include <stdio.h>
 #include "defs.h"
 
+void ShowSqAtBySide(const int side, const S_BOARD *pos) {
+    int rank = 0;
+    int file = 0;
+    int sq = 0;
+
+    printf("\nSquares attacked by %c:\n\n", SideChar[side]);
+    for (rank = RANK_8; rank >= RANK_1; --rank) {
+        printf("%d  ", rank + 1);
+        for (file = FILE_A; file <= FILE_H; ++file) {
+            sq = FR2SQ(file, rank);
+            if (SqAttacked(sq, side, pos) == TRUE) {
+                printf(" X ");
+            } else {
+                printf(" - ");
+            }
+        }
+        printf("\n");
+    }
+    printf("\n    a  b  c  d  e  f  g  h\n\n");
+}
+
 int main(void) {
     AllInit();
 
     S_BOARD board[1];
 
-    printf("--- Loading Start Position ---\n");
-    ParseFen(START_FEN, board);
-    PrintBoard(board);
-    printf("CheckBoard result: %s\n\n", CheckBoard(board) ? "PASSED" : "FAILED");
-
-    printf("--- Loading Middlegame Position ---\n");
-    char *fen = "r1bqk2r/pp2bppp/2n1pn2/3p4/2PP4/2N2N2/PP2BPPP/R1BQK2R w KQkq - 0 8";
+    // Open tactical position: White Queen on d4, Black Rook on e8, Knights & Pawns
+    char *fen = "4r1k1/ppp2ppp/2n5/8/3Q4/5N2/PPP2PPP/4R1K1 w - - 0 1";
     ParseFen(fen, board);
     PrintBoard(board);
-    printf("CheckBoard result: %s\n\n", CheckBoard(board) ? "PASSED" : "FAILED");
+
+    ShowSqAtBySide(WHITE, board);
+    ShowSqAtBySide(BLACK, board);
 
     return 0;
 }
