@@ -92,7 +92,24 @@ Bit:  24     23..20     19       18      17..14     13..7      6..0
 
 ---
 
-## 4. Storage & Runtime Profile
+## 4. Tactical Capture Generation (`GenerateAllCaps` in `movegen.c`)
+
+At the leaves of the main search tree (`depth == 0`), stopping immediately and running a static evaluation causes the **Horizon Effect** (e.g., evaluating a `Queen takes Pawn` capture as `+100` when the Queen is about to be recaptured on the very next ply). To resolve tactical exchanges cleanly, BadBishop enters **Quiescence Search**, which searches only captures until the position becomes quiet.
+
+Rather than calling `GenerateAllMoves()` and discarding ~85% of the move list (quiet moves), `GenerateAllCaps(const S_BOARD *pos, S_MOVELIST *list)` generates **only captures and en passant moves** directly:
+
+1. **Pawn Captures & Capture-Promotions:** Checks diagonal offsets (`\pm 9, \pm 11`) for enemy pieces (expanding into 4 promotion moves on Rank 7/Rank 2) and checks `pos->enPas` for En Passant captures (`MFLAGEP`). Skips all forward pushes (`\pm 10, \pm 20`).
+2. **Castling:** Omitted completely (castling is always a quiet move).
+3. **Sliders (`wB, wR, wQ` / `bB, bR, bQ`):** Slides along each ray until hitting `OFFBOARD` or a piece. Empty squares are traversed without adding a move; hitting an enemy piece calls `AddCaptureMove()` and breaks the ray.
+4. **Non-Sliders (`wN, wK` / `bN, bK`):** Steps once per direction and emits a move only if the target square contains an enemy piece (`PieceCol[pos->pieces[t_sq]] == (side ^ 1)`).
+
+### Example Efficiency Gain (Kiwipete Root Position)
+* **`GenerateAllMoves()`:** Generates `48` moves (`40` quiet moves, `8` captures).
+* **`GenerateAllCaps()`:** Generates only the `8` capture moves (`d5e6`, `e5d7`, `e5f7`, `e5g6`, `f3d4`, `f3h3`, `e2a6`, `g2h3`), reducing move-list population overhead in Quiescence Search by **83%**.
+
+---
+
+## 5. Storage & Runtime Profile
 
 | Component | Storage Size | Allocation | Runtime Complexity |
 | --- | --- | --- | --- |

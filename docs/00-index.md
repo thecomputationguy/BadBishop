@@ -15,7 +15,9 @@ BadBishop uses a **hybrid board representation** that pairs a 120-square mailbox
 3. **[03 — Board State, FEN Parsing & Integrity (`CheckBoard`)](./03-state-and-integrity.md)**
    `S_BOARD` memory layout, exact RAM budget (PC vs. RP2350), FEN state hydration, and automated invariant assertions.
 4. **[04 — Attack Detection & Move Generation](./04-attacks-and-movegen.md)**
-   Reverse ray-casting (`SqAttacked`), 25-bit move integer bit-packing, stack-allocated move lists, and table-driven pseudo-legal move generation.
+   Reverse ray-casting (`SqAttacked`), 25-bit move integer bit-packing, stack-allocated move lists, `GenerateAllMoves()`, and tactical capture generation (`GenerateAllCaps()`).
+5. **[05 — State Transitions (`MakeMove` / `TakeMove`) & Perft Verification](./05-makemove-and-perft.md)**
+   In-place state mutation, $O(1)$ piece list swap-deletion, branchless castling permission masks, legal check filtering, and canonical Perft tree verification.
 
 ---
 
@@ -25,19 +27,20 @@ BadBishop uses a **hybrid board representation** that pairs a 120-square mailbox
 | :--- | :--- | :--- | :--- | :--- |
 | **Coordinate Lookup** | `init.c` | `1,696 B` | `0 B` | $O(1)$ array lookup |
 | **Mailbox & Bitboards** | `board.c`, `bitboards.c` | `256 B` | `1,164 B` (active core) | $O(1)$ bit/square access |
-| **Zobrist Hashing** | `hashkeys.c` | `13,608 B` | `8 B` (`posKey`) | $O(N)$ init, $O(1)$ incremental |
+| **Zobrist Hashing** | `hashkeys.c` | `12,616 B` | `8 B` (`posKey`) | $O(N)$ init, $O(1)$ incremental |
 | **Undo History Stack** | `defs.h` | `0 B` | `32,768 B` (2048 plies) | $O(1)$ push/pop |
 | **Attack Detection** | `attack.c` | `336 B` | `0 B` | $O(1)$ leapers, $O(R)$ sliders ($R \le 7$) |
 | **Move Generation** | `movegen.c`, `io.c` | `512 B` | `2,052 B` (`S_MOVELIST`) | $O(P + S \cdot R)$ per node |
+| **Make / Take Move** | `makemove.c` | `480 B` (`CastlePerm`) | `0 B` (uses `history[]`) | $O(1)$ state transition |
+| **Perft Verification** | `perft.c` | `8 B` (`leafNodes`) | `2,052 B` per ply (stack) | $O(B^D)$ exhaustive tree walk |
 
 ---
 
 ## Build & Verification Quick Reference
 
-```bash
 # Configure and compile (Release mode)
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 
-# Execute unit and integrity test suite
+# Execute all 9 unit and Perft verification suites
 ctest --test-dir build --output-on-failure -V
