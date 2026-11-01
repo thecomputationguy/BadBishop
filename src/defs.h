@@ -200,15 +200,22 @@ void PrintBoard(const S_BOARD *pos); // Prints the current board state in a huma
 int ParseFen(const char *fen,
              S_BOARD *pos);         // Parses a FEN string and sets up the board accordingly
 int CheckBoard(const S_BOARD *pos); // Validates the board state for consistency and correctness
+
+// for movegen.c
 void GenerateAllMoves(const S_BOARD *pos,
                       S_MOVELIST *list); // Generates all possible moves for the current position
                                          // and stores them in a move list
+void GenerateAllCaps(const S_BOARD *pos, S_MOVELIST *list);
 
 // for makemove.c
 int MakeMove(S_BOARD *pos,
              int move); // Makes a move on the board and updates the game state accordingly
 void TakeMove(
     S_BOARD *pos); // Undoes the last move made on the board and restores the previous game state
+
+// for perft.c
+long Perft(int depth, S_BOARD *pos);
+void PerftTest(int depth, S_BOARD *pos);
 
 void AllInit(void); // Initializes all the necessary data structures for the chess engine
 

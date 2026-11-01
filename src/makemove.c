@@ -1,6 +1,5 @@
 #include "defs.h"
 #include <assert.h>
-#include <stdio.h>
 
 #define HASH_PCE(pce, sq) (pos->posKey ^= (PieceKeys[(pce)][(sq)]))
 #define HASH_CA (pos->posKey ^= (CastleKeys[(pos->castlePerm)]))

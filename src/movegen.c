@@ -273,3 +273,113 @@ void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list) {
         pce = LoopNonSlidePce[pceIndex++];
     }
 }
+
+void GenerateAllCaps(const S_BOARD *pos, S_MOVELIST *list) {
+    list->count = 0;
+
+    int pce = EMPTY;
+    int side = pos->side;
+    int sq = 0;
+    int t_sq = 0;
+    int pceNum = 0;
+    int dir = 0;
+    int index = 0;
+    int pceIndex = 0;
+
+    if (side == WHITE) {
+        for (pceNum = 0; pceNum < pos->pceNum[wP]; ++pceNum) {
+            sq = pos->pList[wP][pceNum];
+
+            // Diagonal captures (+9 and +11)
+            if (!SQOFFBOARD(sq + 9) && PieceCol[pos->pieces[sq + 9]] == BLACK) {
+                AddWhitePawnCapMove(pos, sq, sq + 9, pos->pieces[sq + 9], list);
+            }
+            if (!SQOFFBOARD(sq + 11) && PieceCol[pos->pieces[sq + 11]] == BLACK) {
+                AddWhitePawnCapMove(pos, sq, sq + 11, pos->pieces[sq + 11], list);
+            }
+
+            // En Passant captures
+            if (pos->enPas != NO_SQ) {
+                if (sq + 9 == pos->enPas) {
+                    AddEnPassantMove(pos, MOVE(sq, sq + 9, EMPTY, EMPTY, MFLAGEP), list);
+                }
+                if (sq + 11 == pos->enPas) {
+                    AddEnPassantMove(pos, MOVE(sq, sq + 11, EMPTY, EMPTY, MFLAGEP), list);
+                }
+            }
+        }
+    } else {
+        for (pceNum = 0; pceNum < pos->pceNum[bP]; ++pceNum) {
+            sq = pos->pList[bP][pceNum];
+
+            // Diagonal captures (-9 and -11)
+            if (!SQOFFBOARD(sq - 9) && PieceCol[pos->pieces[sq - 9]] == WHITE) {
+                AddBlackPawnCapMove(pos, sq, sq - 9, pos->pieces[sq - 9], list);
+            }
+            if (!SQOFFBOARD(sq - 11) && PieceCol[pos->pieces[sq - 11]] == WHITE) {
+                AddBlackPawnCapMove(pos, sq, sq - 11, pos->pieces[sq - 11], list);
+            }
+
+            // En Passant captures
+            if (pos->enPas != NO_SQ) {
+                if (sq - 9 == pos->enPas) {
+                    AddEnPassantMove(pos, MOVE(sq, sq - 9, EMPTY, EMPTY, MFLAGEP), list);
+                }
+                if (sq - 11 == pos->enPas) {
+                    AddEnPassantMove(pos, MOVE(sq, sq - 11, EMPTY, EMPTY, MFLAGEP), list);
+                }
+            }
+        }
+    }
+
+    /* Loop for Sliders (Bishops, Rooks, Queens) — Captures Only */
+    pceIndex = LoopSlideIndex[side];
+    pce = LoopSlidePce[pceIndex++];
+    while (pce != 0) {
+        for (pceNum = 0; pceNum < pos->pceNum[pce]; ++pceNum) {
+            sq = pos->pList[pce][pceNum];
+
+            for (index = 0; index < NumDir[pce]; ++index) {
+                dir = PceDir[pce][index];
+                t_sq = sq + dir;
+
+                while (!SQOFFBOARD(t_sq)) {
+                    if (pos->pieces[t_sq] != EMPTY) {
+                        if (PieceCol[pos->pieces[t_sq]] == (side ^ 1)) {
+                            AddCaptureMove(pos, MOVE(sq, t_sq, pos->pieces[t_sq], EMPTY, 0), list);
+                        }
+                        break;
+                    }
+                    t_sq += dir;
+                }
+            }
+        }
+        pce = LoopSlidePce[pceIndex++];
+    }
+
+    /* Loop for Non-Sliders (Knights, Kings) — Captures Only */
+    pceIndex = LoopNonSlideIndex[side];
+    pce = LoopNonSlidePce[pceIndex++];
+    while (pce != 0) {
+        for (pceNum = 0; pceNum < pos->pceNum[pce]; ++pceNum) {
+            sq = pos->pList[pce][pceNum];
+
+            for (index = 0; index < NumDir[pce]; ++index) {
+                dir = PceDir[pce][index];
+                t_sq = sq + dir;
+
+                if (SQOFFBOARD(t_sq)) {
+                    continue;
+                }
+
+                if (pos->pieces[t_sq] != EMPTY) {
+                    if (PieceCol[pos->pieces[t_sq]] == (side ^ 1)) {
+                        AddCaptureMove(pos, MOVE(sq, t_sq, pos->pieces[t_sq], EMPTY, 0), list);
+                    }
+                    continue;
+                }
+            }
+        }
+        pce = LoopNonSlidePce[pceIndex++];
+    }
+}

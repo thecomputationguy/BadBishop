@@ -162,6 +162,16 @@ static void test_movegen_counts(void) {
     ParseFen(kiwipete, board);
     GenerateAllMoves(board, list);
     assert(list->count == 48);
+
+    // Start FEN has 0 captures
+    ParseFen(START_FEN, board);
+    GenerateAllCaps(board, list);
+    assert(list->count == 0);
+
+    // Kiwipete has exactly 8 captures
+    ParseFen(kiwipete, board);
+    GenerateAllCaps(board, list);
+    assert(list->count == 8);
 }
 
 static void test_makemove_takemove(void) {
@@ -192,6 +202,44 @@ static void test_makemove_takemove(void) {
     assert(legalCount == 48);
 }
 
+static void test_perft_suite(void) {
+    printf("[9/9] Running Canonical Perft Verification Suite...\n");
+    S_BOARD board[1];
+
+    // 1. Standard Start Position
+    ParseFen(START_FEN, board);
+    assert(Perft(1, board) == 20L);
+    assert(Perft(2, board) == 400L);
+    assert(Perft(3, board) == 8902L);
+    assert(Perft(4, board) == 197281L);
+    printf("  -> Start Position (D4 = 197,281 nodes) PASSED\n");
+
+    // 2. Position 2: "Kiwipete" (Castling, captures, promotions, EP)
+    const char *kiwipete = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    ParseFen(kiwipete, board);
+    assert(Perft(1, board) == 48L);
+    assert(Perft(2, board) == 2039L);
+    assert(Perft(3, board) == 97862L);
+    printf("  -> Kiwipete (D3 = 97,862 nodes) PASSED\n");
+
+    // 3. Position 3: Endgame En Passant & Pin Edge Cases
+    const char *pos3 = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
+    ParseFen(pos3, board);
+    assert(Perft(1, board) == 14L);
+    assert(Perft(2, board) == 191L);
+    assert(Perft(3, board) == 2812L);
+    assert(Perft(4, board) == 43238L);
+    printf("  -> Endgame EP/Pin Position (D4 = 43,238 nodes) PASSED\n");
+
+    // 4. Position 4: Heavy Promotions & Discovered Checks
+    const char *pos4 = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    ParseFen(pos4, board);
+    assert(Perft(1, board) == 6L);
+    assert(Perft(2, board) == 264L);
+    assert(Perft(3, board) == 9467L);
+    printf("  -> Promotion Stress Position (D3 = 9,467 nodes) PASSED\n");
+}
+
 int main(void) {
 #ifdef _MSC_VER
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
@@ -208,8 +256,10 @@ int main(void) {
     test_move_encoding_and_io();
     test_movegen_counts();
     test_makemove_takemove();
+    test_perft_suite();
     printf("\n========================================\n");
     printf(" ALL UNIT TEST SUITES PASSED CLEANLY! \n");
     printf("========================================\n");
+
     return 0;
 }
