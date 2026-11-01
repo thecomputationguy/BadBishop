@@ -1,3 +1,8 @@
+
+#ifdef _MSC_VER
+#include <crtdbg.h>
+#endif
+
 #include "defs.h"
 #include <assert.h>
 #include <stdio.h>
@@ -159,7 +164,40 @@ static void test_movegen_counts(void) {
     assert(list->count == 48);
 }
 
+static void test_makemove_takemove(void) {
+    printf("[8/8] Testing MakeMove & TakeMove State Restoration...\n");
+    S_BOARD board[1];
+    S_MOVELIST list[1];
+
+    const char *kiwipete = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    ParseFen(kiwipete, board);
+    U64 rootKey = board->posKey;
+
+    GenerateAllMoves(board, list);
+    int legalCount = 0;
+
+    for (int i = 0; i < list->count; ++i) {
+        int move = list->moves[i].move;
+        if (!MakeMove(board, move)) {
+            continue;
+        }
+        legalCount++;
+        assert(CheckBoard(board) == TRUE);
+
+        TakeMove(board);
+        assert(CheckBoard(board) == TRUE);
+        assert(board->posKey == rootKey);
+    }
+
+    assert(legalCount == 48);
+}
+
 int main(void) {
+#ifdef _MSC_VER
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
+    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+#endif
+
     AllInit();
 
     test_sq_conversions();
@@ -169,8 +207,9 @@ int main(void) {
     test_sq_attacked();
     test_move_encoding_and_io();
     test_movegen_counts();
+    test_makemove_takemove();
     printf("\n========================================\n");
-    printf(" ALL 7 UNIT TEST SUITES PASSED CLEANLY! \n");
+    printf(" ALL UNIT TEST SUITES PASSED CLEANLY! \n");
     printf("========================================\n");
     return 0;
 }

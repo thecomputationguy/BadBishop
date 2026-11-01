@@ -37,6 +37,7 @@ typedef unsigned long long U64; // Custom type for the pieces
 #define MOVE(f, t, ca, pro, fl) ((f) | ((t) << 7) | ((ca) << 14) | ((pro) << 20) | (fl))
 
 #define MAXPOSITIONMOVES 256
+#define MAXGAMEMOVES 2048
 
 typedef struct {
     int move;
@@ -128,6 +129,13 @@ enum {
 // clang-format on
 
 enum { FALSE, TRUE };
+typedef struct {
+    int move;
+    int castlePerm;
+    int enPas;
+    int fiftyMove;
+    U64 posKey;
+} S_UNDO;
 
 // Core board structure
 typedef struct {
@@ -155,19 +163,23 @@ typedef struct {
 
     int pList[13][10]; // Piece list for each piece type (0-12) and their positions on the board (up
                        // to 10 pieces of each type)
+
+    S_UNDO history[MAXGAMEMOVES]; // History of moves made in the game, storing undo information for
+                                  // each move
 } S_BOARD;
 
 extern int Sq120ToSq64[BRD_SQ_NUM]; // Maps 120-square board to 64-square board
 extern int Sq64ToSq120[64];         // Maps 64-square board to 120-square board
 
-extern U64 PieceKeys[13][120]; // Zobrist keys for each piece type on each square
-extern U64 SideKey;            // Zobrist key for the side to move
-extern U64 CastleKeys[16];     // Zobrist keys for each possible castling rights combination
-extern const int PieceBig[13]; // Indicates whether a piece is a "big" piece (non-pawn)
-extern const int PieceMaj[13]; // Indicates whether a piece is a "major" piece (Rook or Queen)
-extern const int PieceMin[13]; // Indicates whether a piece is a "minor" piece (Knight or Bishop)
-extern const int PieceVal[13]; // Material value of each piece type
-extern const int PieceCol[13]; // Color of each piece type (WHITE, BLACK, or BOTH)
+extern U64 PieceKeys[13][120];  // Zobrist keys for each piece type on each square
+extern U64 SideKey;             // Zobrist key for the side to move
+extern U64 CastleKeys[16];      // Zobrist keys for each possible castling rights combination
+extern const int PieceBig[13];  // Indicates whether a piece is a "big" piece (non-pawn)
+extern const int PieceMaj[13];  // Indicates whether a piece is a "major" piece (Rook or Queen)
+extern const int PieceMin[13];  // Indicates whether a piece is a "minor" piece (Knight or Bishop)
+extern const int PieceVal[13];  // Material value of each piece type
+extern const int PieceCol[13];  // Color of each piece type (WHITE, BLACK, or BOTH)
+extern const int PiecePawn[13]; // Indicates whether a piece is a pawn (1) or not (0)
 
 // Piece type classification arrays
 extern const int PieceKnight[13];
@@ -176,7 +188,7 @@ extern const int PieceRookQueen[13];
 extern const int PieceBishopQueen[13];
 extern const char SideChar[];
 
-// attack.c
+// for attack.c
 int SqAttacked(const int sq, const int side, const S_BOARD *pos);
 
 void InitHashKeys(void); // Initializes the Zobrist hash keys for pieces, side, and castling rights
@@ -191,6 +203,12 @@ int CheckBoard(const S_BOARD *pos); // Validates the board state for consistency
 void GenerateAllMoves(const S_BOARD *pos,
                       S_MOVELIST *list); // Generates all possible moves for the current position
                                          // and stores them in a move list
+
+// for makemove.c
+int MakeMove(S_BOARD *pos,
+             int move); // Makes a move on the board and updates the game state accordingly
+void TakeMove(
+    S_BOARD *pos); // Undoes the last move made on the board and restores the previous game state
 
 void AllInit(void); // Initializes all the necessary data structures for the chess engine
 

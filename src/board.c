@@ -123,7 +123,6 @@ int CheckBoard(const S_BOARD *pos) {
         if (PieceMaj[t_piece] == TRUE) t_majPce[colour]++;
 
         t_material[colour] += PieceVal[t_piece];
-        t_material[BOTH] += PieceVal[t_piece];
     }
 
     // 2. Validate piece counts
@@ -175,8 +174,7 @@ int CheckBoard(const S_BOARD *pos) {
     }
 
     // 5. Validate material and piece type counters
-    if (t_material[WHITE] != pos->material[WHITE] || t_material[BLACK] != pos->material[BLACK] ||
-        t_material[BOTH] != pos->material[BOTH]) {
+    if (t_material[WHITE] != pos->material[WHITE] || t_material[BLACK] != pos->material[BLACK]) {
         printf("Error: Material balance mismatch\n");
         return FALSE;
     }

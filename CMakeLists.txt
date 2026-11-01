@@ -24,6 +24,7 @@ set(ENGINE_SOURCES
     src/attack.c
     src/io.c
     src/movegen.c
+    src/makemove.c
 )
 
 # Main Executable

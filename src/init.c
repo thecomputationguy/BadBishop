@@ -15,6 +15,7 @@ const int PieceVal[13] = { 0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 55
 const int PieceCol[13] = { BOTH, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK, BLACK, BLACK }; // Color of each piece type (WHITE, BLACK, or BOTH)
 
 // Indices: EMPTY, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK
+const int PiecePawn[13]        = { FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE };
 const int PieceKnight[13]      = { FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE };
 const int PieceKing[13]        = { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE };
 const int PieceRookQueen[13]   = { FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE };
