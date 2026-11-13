@@ -249,8 +249,8 @@ static void test_evaluation_and_personalities(void) {
     board->style = STYLE_BALANCED;
     assert(EvalPosition(board) == 0);
 
-    // 2. White up a Knight & Passed Pawn, attacking open Black King file
-    const char *attack_fen = "r1bq1rk1/ppp2p1p/2n5/3P4/4N3/8/PPP2PPP/R2Q1RK1 w - - 0 1";
+    // 2. White up a Bishop & Passed Pawn, attacking open Black King file
+    const char *attack_fen = "r1bq1rk1/ppp2p1p/2n5/3P4/2B1N3/8/PPP2PPP/R1BQ1RK1 w - - 0 1";
     ParseFen(attack_fen, board);
 
     board->style = STYLE_BALANCED;
