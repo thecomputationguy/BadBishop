@@ -240,6 +240,38 @@ static void test_perft_suite(void) {
     printf("  -> Promotion Stress Position (D3 = 9,467 nodes) PASSED\n");
 }
 
+static void test_evaluation_and_personalities(void) {
+    printf("[10/10] Testing Static Evaluation & Personality Modes...\n");
+    S_BOARD board[1];
+
+    // 1. Start Position must be exactly 0 cp in Balanced & Positional modes (symmetric)
+    ParseFen(START_FEN, board);
+    board->style = STYLE_BALANCED;
+    assert(EvalPosition(board) == 0);
+
+    // 2. White up a Knight & Passed Pawn, attacking open Black King file
+    const char *attack_fen = "r1bq1rk1/ppp2p1p/2n5/3P4/4N3/8/PPP2PPP/R2Q1RK1 w - - 0 1";
+    ParseFen(attack_fen, board);
+
+    board->style = STYLE_BALANCED;
+    int evalBalanced = EvalPosition(board);
+
+    board->style = STYLE_POSITIONAL;
+    int evalPositional = EvalPosition(board);
+
+    board->style = STYLE_SHARP;
+    int evalSharp = EvalPosition(board);
+
+    // All three must recognize White's large advantage (> +300 cp), but with distinct weights
+    assert(evalBalanced > 300);
+    assert(evalPositional != evalBalanced);
+    assert(evalSharp != evalBalanced);
+    assert(GetContempt(board) == -50);
+
+    printf("  -> Eval Scores (Balanced: %d cp, Positional: %d cp, Sharp: %d cp) PASSED\n",
+           evalBalanced, evalPositional, evalSharp);
+}
+
 int main(void) {
 #ifdef _MSC_VER
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
@@ -257,6 +289,7 @@ int main(void) {
     test_movegen_counts();
     test_makemove_takemove();
     test_perft_suite();
+    test_evaluation_and_personalities();
     printf("\n========================================\n");
     printf(" ALL UNIT TEST SUITES PASSED CLEANLY! \n");
     printf("========================================\n");

@@ -81,6 +81,11 @@ void ResetBoard(S_BOARD *pos) {
     pos->castlePerm = 0; // No castling rights
     pos->posKey = 0ULL;  // Reset position key
 
+    // 5.1 Keep the chosen personality if valid; otherwise default to STYLE_BALANCED
+    if (pos->style < STYLE_BALANCED || pos->style > STYLE_SHARP) {
+        pos->style = STYLE_BALANCED;
+    }
+
     // 6. Reset piece list
     for (index = 0; index < 13; ++index) {
         int j;
@@ -97,6 +102,7 @@ int CheckBoard(const S_BOARD *pos) {
     /*
     Validates the board state for consistency and correctness.
     */
+
     int t_pceNum[13] = {0};
     int t_bigPce[3] = {0};
     int t_majPce[3] = {0};
@@ -232,6 +238,10 @@ int CheckBoard(const S_BOARD *pos) {
 }
 
 int ParseFen(const char *fen, S_BOARD *pos) {
+    /*
+    Parses a FEN (Forsyth-Edwards Notation) string and sets up the board accordingly.
+    */
+
     if (fen == NULL || pos == NULL) return -1;
 
     int rank = RANK_8;

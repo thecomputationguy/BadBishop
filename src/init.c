@@ -6,6 +6,11 @@ int FilesBrd[BRD_SQ_NUM];    // Maps each square on the 120-square board to its 
                              // (A-H)
 int RanksBrd[BRD_SQ_NUM];    // Maps each square on the 120-square board to its corresponding file
                              // (A-H) and rank (1-8)
+U64 FileBBMask[8];
+U64 RankBBMask[8];
+U64 BlackPassedMask[64];
+U64 WhitePassedMask[64];
+U64 IsolatedMask[64];
 
 // clang-format off
 const int PieceBig[13] = { FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE }; // Indicates whether a piece is a "big" piece (non-pawn)
@@ -23,6 +28,10 @@ const int PieceBishopQueen[13] = { FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE
 // clang-format on
 
 static void InitSq120To64(void) {
+    /*
+    Initializes the Sq120ToSq64 and Sq64ToSq120 arrays.
+    */
+
     int index = 0;
     int file = FILE_A;
     int rank = RANK_1;
@@ -51,6 +60,10 @@ static void InitSq120To64(void) {
 }
 
 static void InitFilesRanksBrd() {
+    /*
+    Initializes the FilesBrd and RanksBrd arrays.
+    */
+
     int index = 0;
     int file = FILE_A;
     int rank = RANK_1;
@@ -73,8 +86,86 @@ static void InitFilesRanksBrd() {
     }
 }
 
+void InitEvalMasks(void) {
+    /*
+    Initializes the evaluation bitboard masks.
+    */
+
+    int sq, tsq, r, f;
+
+    // 1. Initialize file and rank bitboard masks
+    for (sq = 0; sq < 8; ++sq) {
+        FileBBMask[sq] = 0ULL;
+        RankBBMask[sq] = 0ULL;
+    }
+
+    for (r = RANK_8; r >= RANK_1; r--) {
+        for (f = FILE_A; f <= FILE_H; f++) {
+            sq = r * 8 + f;
+            FileBBMask[f] |= (1ULL << sq);
+            RankBBMask[r] |= (1ULL << sq);
+        }
+    }
+
+    // 2. Initialize passed pawn and isolated pawn masks
+    for (sq = 0; sq < 64; ++sq) {
+        IsolatedMask[sq] = 0ULL;
+        WhitePassedMask[sq] = 0ULL;
+        BlackPassedMask[sq] = 0ULL;
+    }
+
+    // 3. Populate passed pawn and isolated pawn masks
+    for (sq = 0; sq < 64; ++sq) {
+        tsq = sq + 8;
+        while (tsq < 64) {
+            WhitePassedMask[sq] |= (1ULL << tsq);
+            tsq += 8;
+        }
+
+        tsq = sq - 8;
+        while (tsq >= 0) {
+            BlackPassedMask[sq] |= (1ULL << tsq);
+            tsq -= 8;
+        }
+
+        if (FilesBrd[SQ120(sq)] > FILE_A) {
+            IsolatedMask[sq] |= FileBBMask[FilesBrd[SQ120(sq)] - 1];
+
+            tsq = sq + 7;
+            while (tsq < 64) {
+                WhitePassedMask[sq] |= (1ULL << tsq);
+                tsq += 8;
+            }
+
+            tsq = sq - 9;
+            while (tsq >= 0) {
+                BlackPassedMask[sq] |= (1ULL << tsq);
+                tsq -= 8;
+            }
+        }
+
+        if (FilesBrd[SQ120(sq)] < FILE_H) {
+            IsolatedMask[sq] |= FileBBMask[FilesBrd[SQ120(sq)] + 1];
+
+            tsq = sq + 9;
+            while (tsq < 64) {
+                WhitePassedMask[sq] |= (1ULL << tsq);
+                tsq += 8;
+            }
+
+            tsq = sq - 7;
+            while (tsq >= 0) {
+                BlackPassedMask[sq] |= (1ULL << tsq);
+                tsq -= 8;
+            }
+        }
+    }
+}
+
 void AllInit(void) {
     InitSq120To64();     // Initialize the square mapping arrays
     InitFilesRanksBrd(); // Initialize the file and rank mapping arrays
     InitHashKeys();      // Initialize the Zobrist hash keys
+    InitFilesRanksBrd(); // Initialize the file-rank bitboard
+    InitEvalMasks();     // Initialize bitboard eval masks
 }

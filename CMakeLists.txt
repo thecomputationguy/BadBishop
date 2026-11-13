@@ -26,6 +26,7 @@ set(ENGINE_SOURCES
     src/movegen.c
     src/makemove.c
     src/perft.c
+    src/evaluate.c
 )
 
 # Main Executable

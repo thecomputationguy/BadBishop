@@ -152,6 +152,7 @@ typedef struct {
     int hisPly; // Total half-moves played in the whole game
 
     int castlePerm; // Castling permissions encoded as a 4-bit integer:
+    int style;      // STYLE_BALANCED (0), STYLE_POSITIONAL (1), or STYLE_SHARP (2)
 
     U64 posKey; // 64-bit Zobrist hash of the current position
 
@@ -216,6 +217,32 @@ void TakeMove(
 // for perft.c
 long Perft(int depth, S_BOARD *pos);
 void PerftTest(int depth, S_BOARD *pos);
+
+/* --- ENGINE PERSONALITY MODES --- */
+typedef enum { STYLE_BALANCED = 0, STYLE_POSITIONAL = 1, STYLE_SHARP = 2 } ENGINE_STYLE;
+
+typedef struct {
+    int materialWeight;   // 100 = 1.0x
+    int pstWeight;        // Piece-square table weight
+    int pawnStructWeight; // Isolated / passed pawns
+    int mobilityWeight;   // Open files / piece activity
+    int ownKingSafety;    // Defending our own king
+    int oppKingAttack;    // Attacking the enemy king
+    int contempt;         // Draw score in centipawns (e.g., -50 for Sharp)
+} S_PERSONALITY;
+
+extern const S_PERSONALITY Personalities[3];
+
+/* --- EVALUATION BITBOARD MASKS --- */
+extern U64 FileBBMask[8];
+extern U64 RankBBMask[8];
+extern U64 BlackPassedMask[64];
+extern U64 WhitePassedMask[64];
+extern U64 IsolatedMask[64];
+
+/* --- EVALUATE.C PROTOTYPES --- */
+int EvalPosition(const S_BOARD *pos);
+int GetContempt(const S_BOARD *pos);
 
 void AllInit(void); // Initializes all the necessary data structures for the chess engine
 
