@@ -36,3 +36,15 @@ add_executable(badbishop src/main.c ${ENGINE_SOURCES})
 enable_testing()
 add_executable(badbishop_tests tests/test_perft.c ${ENGINE_SOURCES})
 add_test(NAME PerftTest COMMAND badbishop_tests)
+
+# Optional Sphinx Documentation Target
+find_program(SPHINX_EXECUTABLE NAMES sphinx-build)
+if(SPHINX_EXECUTABLE)
+    add_custom_target(docs
+        COMMAND ${SPHINX_EXECUTABLE} -b html
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs"
+                "${CMAKE_CURRENT_BINARY_DIR}/docs"
+        COMMENT "Building Sphinx HTML documentation in build/docs/index.html"
+        VERBATIM
+    )
+endif()
