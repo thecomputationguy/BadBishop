@@ -1,8 +1,16 @@
+/**
+ * @file bitboards.c
+ * @brief Bitboard manipulation and display utilities.
+ */
+
 #include "defs.h"
 #include <stdio.h>
 
+/**
+ * @brief Prints the bitboard in a human-readable format.
+ * @param bb The 64-bit bitboard to display.
+ */
 void PrintBitBoard(U64 bb) {
-    /* Print the bitboard in a human-readable format */
     int rank = 0;
     int file = 0;
     int sq = 0;
@@ -26,10 +34,12 @@ void PrintBitBoard(U64 bb) {
     printf("\n   a b c d e f g h\n\n");
 }
 
+/**
+ * @brief Counts the number of set bits in the bitboard using Kernighan's Algorithm.
+ * @param bb The 64-bit bitboard to count.
+ * @return Number of bits set to 1.
+ */
 int CountBits(U64 bb) {
-    /*
-    Counts the number of set bits in the bitboard using Kernighan's Algorithm.
-    */
     int count = 0;
     while (bb) {
         bb &= (bb - 1); // Clear the least significant bit
@@ -38,10 +48,12 @@ int CountBits(U64 bb) {
     return count;
 }
 
+/**
+ * @brief Pops the least significant bit from the bitboard and returns its index.
+ * @param bb Pointer to the 64-bit bitboard to modify.
+ * @return 0-based index (0-63) of the popped least significant bit.
+ */
 int PopBit(U64 *bb) {
-    /*
-    Pops the least significant bit from the bitboard and returns its index.
-    */
     U64 b = *bb ^ (*bb - 1);
     unsigned int fold = (unsigned int)((b & 0xffffffff) ^ (b >> 32));
     *bb &= (*bb - 1);

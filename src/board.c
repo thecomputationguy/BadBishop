@@ -1,15 +1,23 @@
+/**
+ * @file board.c
+ * @brief Board state management, FEN parsing, printing, and consistency checking.
+ */
+
 #include "defs.h"
 #include <stdio.h>
 
-const char PceChar[] = ".PNBRQKpnbrqk";
-const char SideChar[] = "wb-";
+const char PceChar[] = ".PNBRQKpnbrqk"; /**< Character representations for pieces indexed by piece enum. */
+const char SideChar[] = "wb-";            /**< Character representations for sides ('w', 'b', '-'). */
 
+/**
+ * @brief Prints the current board state in a human-readable format.
+ *
+ * Displays the board with ranks and files, along with the side to move, en passant square,
+ * castling rights, and the position key.
+ *
+ * @param pos Pointer to the board state to print.
+ */
 void PrintBoard(const S_BOARD *pos) {
-    /*
-    Prints the current board state in a human-readable format.
-    Displays the board with ranks and files, along with the side to move, en passant square,
-    castling rights, and the position key.
-    */
     int sq, file, rank, piece;
 
     printf("\nGame Board:\n\n");
@@ -38,10 +46,11 @@ void PrintBoard(const S_BOARD *pos) {
     printf("posKey: %llX\n\n", pos->posKey);
 }
 
+/**
+ * @brief Resets the board to an empty state.
+ * @param pos Pointer to the board state to reset.
+ */
 void ResetBoard(S_BOARD *pos) {
-    /*
-    Resets the board to an empty state.
-    */
     int index = 0;
 
     // 1. Set all 120 squares to OFFBOARD
@@ -98,11 +107,12 @@ void ResetBoard(S_BOARD *pos) {
 #include "defs.h"
 #include <stdio.h>
 
+/**
+ * @brief Validates the board state for consistency and correctness.
+ * @param pos Pointer to the board state to validate.
+ * @return TRUE if the board state is valid, FALSE otherwise.
+ */
 int CheckBoard(const S_BOARD *pos) {
-    /*
-    Validates the board state for consistency and correctness.
-    */
-
     int t_pceNum[13] = {0};
     int t_bigPce[3] = {0};
     int t_majPce[3] = {0};
@@ -237,11 +247,13 @@ int CheckBoard(const S_BOARD *pos) {
     return TRUE;
 }
 
+/**
+ * @brief Parses a FEN (Forsyth-Edwards Notation) string and sets up the board accordingly.
+ * @param fen Null-terminated FEN string.
+ * @param pos Pointer to the board state to populate.
+ * @return 0 on success, -1 on error.
+ */
 int ParseFen(const char *fen, S_BOARD *pos) {
-    /*
-    Parses a FEN (Forsyth-Edwards Notation) string and sets up the board accordingly.
-    */
-
     if (fen == NULL || pos == NULL) return -1;
 
     int rank = RANK_8;

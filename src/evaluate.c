@@ -1,6 +1,12 @@
+/**
+ * @file evaluate.c
+ * @brief Static position evaluation, piece-square tables, and personality-based scoring.
+ */
+
 #include "defs.h"
 #include <stdlib.h>
 
+/** @brief Personality configurations indexed by ENGINE_STYLE. */
 const S_PERSONALITY Personalities[3] = {
     // STYLE_BALANCED: Objective 100% weights, 0 contempt
     {100, 100, 100, 100, 100, 100, 0  },
@@ -12,19 +18,20 @@ const S_PERSONALITY Personalities[3] = {
     {92,  110, 75,  145, 80,  185, -50}
 };
 
-static const int PawnIsolated = -10;
-static const int PawnPassed[8] = {0, 5, 10, 20, 35, 60, 100, 200};
-static const int RookOpenFile = 10;
-static const int RookSemiOpenFile = 5;
-static const int QueenOpenFile = 5;
-static const int QueenSemiOpenFile = 3;
-static const int BishopPair = 30;
-static const int KingOpenFilePenalty = 25;
+static const int PawnIsolated = -10;                                   /**< Penalty for an isolated pawn. */
+static const int PawnPassed[8] = {0, 5, 10, 20, 35, 60, 100, 200};     /**< Passed pawn bonus indexed by rank. */
+static const int RookOpenFile = 10;                                    /**< Bonus for a rook on an open file. */
+static const int RookSemiOpenFile = 5;                                 /**< Bonus for a rook on a semi-open file. */
+static const int QueenOpenFile = 5;                                    /**< Bonus for a queen on an open file. */
+static const int QueenSemiOpenFile = 3;                                /**< Bonus for a queen on a semi-open file. */
+static const int BishopPair = 30;                                      /**< Bonus for having the bishop pair. */
+static const int KingOpenFilePenalty = 25;                             /**< Penalty for a king on an open/semi-open file in middlegame. */
 
-// Endgame material threshold (1 Rook + 2 Minors + 2 Pawns = 1350)
+/** @brief Endgame material threshold (1 Rook + 2 Minors + 2 Pawns = 1350). */
 #define ENDGAME_MAT 1350
 
 // clang-format off
+/** @brief Piece-square table for pawns (White's perspective). */
 static const int PawnTable[64] = {
     0,   0,   0,   0,   0,   0,   0,   0,
    10,  10,   0, -10, -10,   0,  10,  10,
@@ -36,6 +43,7 @@ static const int PawnTable[64] = {
     0,   0,   0,   0,   0,   0,   0,   0
 };
 
+/** @brief Piece-square table for knights (White's perspective). */
 static const int KnightTable[64] = {
     0, -10,   0,   0,   0,   0, -10,   0,
     0,   0,   0,   5,   5,   0,   0,   0,
@@ -47,6 +55,7 @@ static const int KnightTable[64] = {
     0,   0,   0,   0,   0,   0,   0,   0
 };
 
+/** @brief Piece-square table for bishops (White's perspective). */
 static const int BishopTable[64] = {
     0,   0, -10,   0,   0, -10,   0,   0,
     0,   0,   0,  10,  10,   0,   0,   0,
@@ -58,6 +67,7 @@ static const int BishopTable[64] = {
     0,   0,   0,   0,   0,   0,   0,   0
 };
 
+/** @brief Piece-square table for rooks (White's perspective). */
 static const int RookTable[64] = {
     0,   0,   5,  10,  10,   5,   0,   0,
     0,   0,   5,  10,  10,   5,   0,   0,
@@ -69,6 +79,7 @@ static const int RookTable[64] = {
     0,   0,   5,  10,  10,   5,   0,   0
 };
 
+/** @brief Piece-square table for kings in the endgame (White's perspective). */
 static const int KingE[64] = {
   -50, -10,   0,   0,   0,   0, -10, -50,
   -10,   0,  10,  10,  10,  10,   0, -10,
@@ -80,6 +91,7 @@ static const int KingE[64] = {
   -50, -10,   0,   0,   0,   0, -10, -50
 };
 
+/** @brief Piece-square table for kings in the opening/middlegame (White's perspective). */
 static const int KingO[64] = {
     0,   5,   5, -10, -10,   0,  10,   5,
   -30, -30, -30, -30, -30, -30, -30, -30,
@@ -91,6 +103,7 @@ static const int KingO[64] = {
   -70, -70, -70, -70, -70, -70, -70, -70
 };
 
+/** @brief Lookup table to vertically mirror a 64-square index for Black's perspective. */
 const int Mirror64[64] = {
    56,  57,  58,  59,  60,  61,  62,  63,
    48,  49,  50,  51,  52,  53,  54,  55,
@@ -103,14 +116,18 @@ const int Mirror64[64] = {
 };
 // clang-format on
 
+/**
+ * @brief Mirrors a 64-square index vertically between White and Black perspectives.
+ * @param sq 64-square index (0-63).
+ */
 #define MIRROR64(sq) (Mirror64[(sq)])
 
-// Fast Material Draw Detection (K vs K, KN vs K, KB vs K, KNN vs K)
+/**
+ * @brief Fast material draw detection (K vs K, KN vs K, KB vs K, KNN vs K).
+ * @param pos Pointer to the board state.
+ * @return TRUE if the position is a draw due to insufficient material, FALSE otherwise.
+ */
 static int MaterialDraw(const S_BOARD *pos) {
-    /*
-    Returns TRUE if the position is a draw due to insufficient material.
-    */
-
     if (!pos->pceNum[wR] && !pos->pceNum[bR] && !pos->pceNum[wQ] && !pos->pceNum[bQ]) {
         if (!pos->pceNum[bB] && !pos->pceNum[wB]) {
             if (pos->pceNum[wN] < 3 && pos->pceNum[bN] < 3) {
@@ -131,11 +148,12 @@ static int MaterialDraw(const S_BOARD *pos) {
     return FALSE;
 }
 
+/**
+ * @brief Returns the contempt value based on the current position's style.
+ * @param pos Pointer to the board state.
+ * @return Contempt score in centipawns.
+ */
 int GetContempt(const S_BOARD *pos) {
-    /*
-    Returns the contempt value based on the current position's style.
-    */
-
     int style = pos->style;
     if (style < STYLE_BALANCED || style > STYLE_SHARP) {
         style = STYLE_BALANCED;
@@ -143,11 +161,12 @@ int GetContempt(const S_BOARD *pos) {
     return Personalities[style].contempt;
 }
 
+/**
+ * @brief Evaluates the current position and returns a score from the side-to-move's perspective.
+ * @param pos Pointer to the board state.
+ * @return Static evaluation score in centipawns.
+ */
 int EvalPosition(const S_BOARD *pos) {
-    /*
-    Evaluates the current position and returns a score.
-    */
-
     if (!pos->pceNum[wP] && !pos->pceNum[bP] && MaterialDraw(pos) == TRUE) {
         return 0;
     }

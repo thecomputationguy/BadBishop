@@ -1,10 +1,17 @@
+/**
+ * @file io.c
+ * @brief Input/output formatting helpers for squares, moves, and move lists.
+ */
+
 #include "defs.h"
 #include <stdio.h>
 
+/**
+ * @brief Prints a square in algebraic notation.
+ * @param sq Square index on the 120-square board.
+ * @return Pointer to a static null-terminated algebraic square string.
+ */
 char *PrSq(const int sq) {
-    /*
-    Print a square in algebraic notation.
-    */
     static char SqStr[3];
 
     int file = FilesBrd[sq];
@@ -14,10 +21,12 @@ char *PrSq(const int sq) {
     return SqStr;
 }
 
+/**
+ * @brief Print a move in algebraic notation.
+ * @param move Bitpacked move integer.
+ * @return Pointer to a static null-terminated algebraic move string.
+ */
 char *PrMove(const int move) {
-    /*
-    Print a move in algebraic notation.
-    */
     static char MvStr[6];
 
     int ff = FilesBrd[FROMSQ(move)];
@@ -46,10 +55,11 @@ char *PrMove(const int move) {
     return MvStr;
 }
 
+/**
+ * @brief Prints a list of moves in algebraic notation.
+ * @param list Pointer to the move list to print.
+ */
 void PrintMoveList(const S_MOVELIST *list) {
-    /*
-    Prints a list of moves in algebraic notation.
-    */
     int index = 0;
     int score = 0;
     int move = 0;

@@ -1,37 +1,44 @@
+/**
+ * @file init.c
+ * @brief Initialization of lookup tables, piece classification arrays, and evaluation masks.
+ */
+
 #include "defs.h"
 
-int Sq120ToSq64[BRD_SQ_NUM]; // Maps 120-square board to 64-square board
-int Sq64ToSq120[64];         // Maps 64-square board to 120
-int FilesBrd[BRD_SQ_NUM];    // Maps each square on the 120-square board to its corresponding file
-                             // (A-H)
-int RanksBrd[BRD_SQ_NUM];    // Maps each square on the 120-square board to its corresponding file
-                             // (A-H) and rank (1-8)
-U64 FileBBMask[8];
-U64 RankBBMask[8];
-U64 BlackPassedMask[64];
-U64 WhitePassedMask[64];
-U64 IsolatedMask[64];
+int Sq120ToSq64[BRD_SQ_NUM]; /**< Maps 120-square board to 64-square board. */
+int Sq64ToSq120[64];         /**< Maps 64-square board to 120-square board. */
+int FilesBrd[BRD_SQ_NUM];    /**< Maps each square on the 120-square board to its corresponding file (A-H). */
+int RanksBrd[BRD_SQ_NUM];    /**< Maps each square on the 120-square board to its corresponding rank (1-8). */
+U64 FileBBMask[8];           /**< Bitboard masks for each file (A-H). */
+U64 RankBBMask[8];           /**< Bitboard masks for each rank (1-8). */
+U64 BlackPassedMask[64];     /**< Passed pawn masks for Black pawns on each 64-square index. */
+U64 WhitePassedMask[64];     /**< Passed pawn masks for White pawns on each 64-square index. */
+U64 IsolatedMask[64];        /**< Isolated pawn masks for each 64-square index. */
 
 // clang-format off
-const int PieceBig[13] = { FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE }; // Indicates whether a piece is a "big" piece (non-pawn)
-const int PieceMaj[13] = { FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE }; // Indicates whether a piece is a "major" piece (Rook or Queen)
-const int PieceMin[13] = { FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE }; // Indicates whether a piece is a "minor" piece (Knight or Bishop)
-const int PieceVal[13] = { 0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000 }; // Material value of each piece type
-const int PieceCol[13] = { BOTH, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK, BLACK, BLACK }; // Color of each piece type (WHITE, BLACK, or BOTH)
+const int PieceBig[13] = { FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE }; /**< Indicates whether a piece is a "big" piece (non-pawn). */
+const int PieceMaj[13] = { FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE }; /**< Indicates whether a piece is a "major" piece (Rook or Queen). */
+const int PieceMin[13] = { FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE }; /**< Indicates whether a piece is a "minor" piece (Knight or Bishop). */
+const int PieceVal[13] = { 0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000 }; /**< Material value of each piece type. */
+const int PieceCol[13] = { BOTH, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, BLACK, BLACK, BLACK, BLACK, BLACK, BLACK }; /**< Color of each piece type (WHITE, BLACK, or BOTH). */
 
-// Indices: EMPTY, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK
-const int PiecePawn[13]        = { FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE };
-const int PieceKnight[13]      = { FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE };
-const int PieceKing[13]        = { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE };
-const int PieceRookQueen[13]   = { FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE };
-const int PieceBishopQueen[13] = { FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE };
+/**
+ * @name Piece Type Classification Arrays
+ * Indices: EMPTY, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK.
+ * @{
+ */
+const int PiecePawn[13]        = { FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE }; /**< Indicates whether a piece is a pawn. */
+const int PieceKnight[13]      = { FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE }; /**< Indicates whether a piece is a knight. */
+const int PieceKing[13]        = { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE }; /**< Indicates whether a piece is a king. */
+const int PieceRookQueen[13]   = { FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE }; /**< Indicates whether a piece is a rook or queen. */
+const int PieceBishopQueen[13] = { FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE }; /**< Indicates whether a piece is a bishop or queen. */
+/** @} */
 // clang-format on
 
+/**
+ * @brief Initializes the Sq120ToSq64 and Sq64ToSq120 arrays.
+ */
 static void InitSq120To64(void) {
-    /*
-    Initializes the Sq120ToSq64 and Sq64ToSq120 arrays.
-    */
-
     int index = 0;
     int file = FILE_A;
     int rank = RANK_1;
@@ -59,11 +66,10 @@ static void InitSq120To64(void) {
     }
 }
 
+/**
+ * @brief Initializes the FilesBrd and RanksBrd arrays.
+ */
 static void InitFilesRanksBrd() {
-    /*
-    Initializes the FilesBrd and RanksBrd arrays.
-    */
-
     int index = 0;
     int file = FILE_A;
     int rank = RANK_1;
@@ -86,11 +92,10 @@ static void InitFilesRanksBrd() {
     }
 }
 
+/**
+ * @brief Initializes the evaluation bitboard masks.
+ */
 void InitEvalMasks(void) {
-    /*
-    Initializes the evaluation bitboard masks.
-    */
-
     int sq, tsq, r, f;
 
     // 1. Initialize file and rank bitboard masks
@@ -162,6 +167,9 @@ void InitEvalMasks(void) {
     }
 }
 
+/**
+ * @brief Initializes all the necessary data structures for the chess engine.
+ */
 void AllInit(void) {
     InitSq120To64();     // Initialize the square mapping arrays
     InitFilesRanksBrd(); // Initialize the file and rank mapping arrays

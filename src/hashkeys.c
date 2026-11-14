@@ -1,15 +1,20 @@
+/**
+ * @file hashkeys.c
+ * @brief Zobrist hashing initialization and position key generation.
+ */
+
 #include "defs.h"
 #include <stdlib.h>
 
-U64 PieceKeys[13][120];
-U64 SideKey;
-U64 CastleKeys[16];
+U64 PieceKeys[13][120]; /**< Zobrist keys for each piece type on each square. */
+U64 SideKey;            /**< Zobrist key for the side to move. */
+U64 CastleKeys[16];     /**< Zobrist keys for each possible castling rights combination. */
 
+/**
+ * @brief Generates a random 64-bit number by combining multiple calls to rand() and shifting the bits appropriately.
+ * @return A pseudo-random 64-bit unsigned integer.
+ */
 static U64 Rand64(void) {
-    /*
-    Generates a random 64-bit number by combining multiple calls to rand() and shifting the bits
-    appropriately.
-    */
     U64 r = 0ULL;
     r |= ((U64)rand() & 0x7FFF);
     r |= (((U64)rand() & 0x7FFF) << 15);
@@ -19,10 +24,10 @@ static U64 Rand64(void) {
     return r;
 }
 
+/**
+ * @brief Initializes the Zobrist hash keys for pieces, side, and castling rights.
+ */
 void InitHashKeys(void) {
-    /*
-    Initializes the Zobrist hash keys for pieces, side, and castling rights.
-    */
     int i = 0;
     int j = 0;
 
@@ -39,10 +44,12 @@ void InitHashKeys(void) {
     }
 }
 
+/**
+ * @brief Generates a unique 64-bit hash key for the current board position.
+ * @param pos Pointer to the board state.
+ * @return 64-bit Zobrist position key.
+ */
 U64 GeneratePosKey(const S_BOARD *pos) {
-    /*
-    Generates a unique 64-bit hash key for the current board position.
-    */
     int sq = 0;
     U64 finalKey = 0ULL;
     int piece = EMPTY;

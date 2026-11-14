@@ -1,10 +1,19 @@
+/**
+ * @file perft.c
+ * @brief Performance test (perft) functions for verifying move generation correctness.
+ */
+
 #include "defs.h"
 #include <assert.h>
 #include <stdio.h>
 
+static long leafNodes; /**< Accumulated leaf node count during a perft traversal. */
 
-static long leafNodes;
-
+/**
+ * @brief Recursively counts legal leaf nodes to the given depth.
+ * @param depth Remaining search depth in plies.
+ * @param pos Pointer to the board state.
+ */
 static void PerftRecursive(int depth, S_BOARD *pos) {
     assert(CheckBoard(pos));
 
@@ -26,6 +35,12 @@ static void PerftRecursive(int depth, S_BOARD *pos) {
     }
 }
 
+/**
+ * @brief Counts the number of leaf nodes at a given depth from the current position.
+ * @param depth Search depth in plies.
+ * @param pos Pointer to the board state.
+ * @return Total number of leaf nodes visited.
+ */
 long Perft(int depth, S_BOARD *pos) {
     assert(CheckBoard(pos));
 
@@ -34,6 +49,11 @@ long Perft(int depth, S_BOARD *pos) {
     return leafNodes;
 }
 
+/**
+ * @brief Runs a perft test to the given depth and prints per-move node counts.
+ * @param depth Search depth in plies.
+ * @param pos Pointer to the board state.
+ */
 void PerftTest(int depth, S_BOARD *pos) {
     assert(CheckBoard(pos));
 

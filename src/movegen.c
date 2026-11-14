@@ -1,14 +1,24 @@
+/**
+ * @file movegen.c
+ * @brief Pseudo-legal move generation for all pieces, captures, castling, and en passant.
+ */
+
 #include "defs.h"
 #include <stdio.h>
 
+/**
+ * @brief Checks if a 120-square index is off the 8x8 board.
+ * @param sq Square index on the 120-square board.
+ */
 #define SQOFFBOARD(sq) (FilesBrd[(sq)] == OFFBOARD)
 
 // clang-format off
-const int LoopSlidePce[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
-const int LoopNonSlidePce[6] = { wN, wK, 0, bN, bK, 0 };
-const int LoopSlideIndex[2] = { 0, 4 };
-const int LoopNonSlideIndex[2] = { 0, 3 };
+const int LoopSlidePce[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };    /**< Sliding piece types grouped by side (0-terminated). */
+const int LoopNonSlidePce[6] = { wN, wK, 0, bN, bK, 0 };         /**< Non-sliding piece types grouped by side (0-terminated). */
+const int LoopSlideIndex[2] = { 0, 4 };                          /**< Starting index into LoopSlidePce for WHITE and BLACK. */
+const int LoopNonSlideIndex[2] = { 0, 3 };                       /**< Starting index into LoopNonSlidePce for WHITE and BLACK. */
 
+/** @brief Direction offsets on the 120-square board for each piece type. */
 const int PceDir[13][8] = {
     { 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0 },
@@ -25,46 +35,61 @@ const int PceDir[13][8] = {
     { -1, -10, 1, 10, -9, -11, 11, 9 }
 };
 
+/** @brief Number of valid direction offsets in PceDir for each piece type. */
 const int NumDir[13] = {
     0, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8, 8
 };
 // clang-format on
 
+/**
+ * @brief Add a quiet move to the move list.
+ * @param pos Pointer to the board state.
+ * @param move Bitpacked move integer.
+ * @param list Pointer to the move list.
+ */
 static void AddQuietMove(const S_BOARD *pos, int move, S_MOVELIST *list) {
-    /*
-    Add a quiet move to the move list.
-    */
     (void)pos;
     list->moves[list->count].move = move;
     list->moves[list->count].score = 0;
     list->count++;
 }
 
+/**
+ * @brief Add a capture move to the move list.
+ * @param pos Pointer to the board state.
+ * @param move Bitpacked move integer.
+ * @param list Pointer to the move list.
+ */
 static void AddCaptureMove(const S_BOARD *pos, int move, S_MOVELIST *list) {
-    /*
-    Add a capture move to the move list.
-    */
     (void)pos;
     list->moves[list->count].move = move;
     list->moves[list->count].score = 0;
     list->count++;
 }
 
+/**
+ * @brief Add an en passant move to the move list.
+ * @param pos Pointer to the board state.
+ * @param move Bitpacked move integer.
+ * @param list Pointer to the move list.
+ */
 static void AddEnPassantMove(const S_BOARD *pos, int move, S_MOVELIST *list) {
-    /*
-    Add an en passant move to the move list.
-    */
     (void)pos;
     list->moves[list->count].move = move;
     list->moves[list->count].score = 0;
     list->count++;
 }
 
+/**
+ * @brief Add a white pawn capture move to the move list, generating promotions if on rank 7.
+ * @param pos Pointer to the board state.
+ * @param from Origin square index.
+ * @param to Destination square index.
+ * @param cap Captured piece type.
+ * @param list Pointer to the move list.
+ */
 static void AddWhitePawnCapMove(const S_BOARD *pos, const int from, const int to, const int cap,
                                 S_MOVELIST *list) {
-    /*
-    Add a white pawn capture move to the move list.
-    */
     if (RanksBrd[from] == RANK_7) {
         AddCaptureMove(pos, MOVE(from, to, cap, wQ, 0), list);
         AddCaptureMove(pos, MOVE(from, to, cap, wR, 0), list);
@@ -75,10 +100,14 @@ static void AddWhitePawnCapMove(const S_BOARD *pos, const int from, const int to
     }
 }
 
+/**
+ * @brief Add a white pawn move to the move list, generating promotions if on rank 7.
+ * @param pos Pointer to the board state.
+ * @param from Origin square index.
+ * @param to Destination square index.
+ * @param list Pointer to the move list.
+ */
 static void AddWhitePawnMove(const S_BOARD *pos, const int from, const int to, S_MOVELIST *list) {
-    /*
-    Add a white pawn move to the move list.
-    */
     if (RanksBrd[from] == RANK_7) {
         AddQuietMove(pos, MOVE(from, to, EMPTY, wQ, 0), list);
         AddQuietMove(pos, MOVE(from, to, EMPTY, wR, 0), list);
@@ -89,11 +118,16 @@ static void AddWhitePawnMove(const S_BOARD *pos, const int from, const int to, S
     }
 }
 
+/**
+ * @brief Add a black pawn capture move to the move list, generating promotions if on rank 2.
+ * @param pos Pointer to the board state.
+ * @param from Origin square index.
+ * @param to Destination square index.
+ * @param cap Captured piece type.
+ * @param list Pointer to the move list.
+ */
 static void AddBlackPawnCapMove(const S_BOARD *pos, const int from, const int to, const int cap,
                                 S_MOVELIST *list) {
-    /*
-    Add a black pawn capture move to the move list.
-    */
     if (RanksBrd[from] == RANK_2) {
         AddCaptureMove(pos, MOVE(from, to, cap, bQ, 0), list);
         AddCaptureMove(pos, MOVE(from, to, cap, bR, 0), list);
@@ -104,10 +138,14 @@ static void AddBlackPawnCapMove(const S_BOARD *pos, const int from, const int to
     }
 }
 
+/**
+ * @brief Add a black pawn move to the move list, generating promotions if on rank 2.
+ * @param pos Pointer to the board state.
+ * @param from Origin square index.
+ * @param to Destination square index.
+ * @param list Pointer to the move list.
+ */
 static void AddBlackPawnMove(const S_BOARD *pos, const int from, const int to, S_MOVELIST *list) {
-    /*
-    Add a black pawn move to the move list.
-    */
     if (RanksBrd[from] == RANK_2) {
         AddQuietMove(pos, MOVE(from, to, EMPTY, bQ, 0), list);
         AddQuietMove(pos, MOVE(from, to, EMPTY, bR, 0), list);
@@ -118,6 +156,11 @@ static void AddBlackPawnMove(const S_BOARD *pos, const int from, const int to, S
     }
 }
 
+/**
+ * @brief Generates all possible pseudo-legal moves for the current position and stores them in a move list.
+ * @param pos Pointer to the board state.
+ * @param list Pointer to the move list to populate.
+ */
 void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list) {
     list->count = 0;
 
@@ -274,6 +317,11 @@ void GenerateAllMoves(const S_BOARD *pos, S_MOVELIST *list) {
     }
 }
 
+/**
+ * @brief Generates all capture moves (including en passant) for the current position.
+ * @param pos Pointer to the board state.
+ * @param list Pointer to the move list to populate.
+ */
 void GenerateAllCaps(const S_BOARD *pos, S_MOVELIST *list) {
     list->count = 0;
 

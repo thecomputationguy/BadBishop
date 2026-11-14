@@ -1,13 +1,27 @@
+/**
+ * @file attack.c
+ * @brief Square attack detection logic on the 120-square mailbox board.
+ */
+
 #include "defs.h"
 
-// Direction offset arrays on the 120-square mailbox
-const int KnDir[8] = {-8, -19, -21, -12, 8, 19, 21, 12};
-const int RkDir[4] = {-1, -10, 1, 10};
-const int BiDir[4] = {-9, -11, 11, 9};
-const int KiDir[8] = {-1, -10, 1, 10, -9, -11, 11, 9};
+/** @name Direction Offset Arrays on the 120-Square Mailbox
+ * @{
+ */
+const int KnDir[8] = {-8, -19, -21, -12, 8, 19, 21, 12};    /**< Knight move offsets. */
+const int RkDir[4] = {-1, -10, 1, 10};                      /**< Rook (orthogonal) ray offsets. */
+const int BiDir[4] = {-9, -11, 11, 9};                      /**< Bishop (diagonal) ray offsets. */
+const int KiDir[8] = {-1, -10, 1, 10, -9, -11, 11, 9};      /**< King move offsets. */
+/** @} */
 
+/**
+ * @brief Checks if a square is attacked by the specified side.
+ * @param sq Square index on the 120-square board.
+ * @param side Attacking side (WHITE or BLACK).
+ * @param pos Pointer to the board state.
+ * @return TRUE if the square is attacked, FALSE otherwise.
+ */
 int SqAttacked(const int sq, const int side, const S_BOARD *pos) {
-    /* Check if a square is attacked by the specified side */
     int pce, index, t_sq, dir;
 
     // 1. Pawns

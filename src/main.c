@@ -1,5 +1,14 @@
+/**
+ * @file main.c
+ * @brief Entry point for the BadBishop chess engine.
+ */
+
 #include "defs.h"
 
+/**
+ * @brief Initializes engine data structures and runs a perft test on the Kiwipete position.
+ * @return Exit status code (0 on success).
+ */
 int main(void) {
     AllInit();
 

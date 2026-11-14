@@ -1,12 +1,23 @@
+/**
+ * @file makemove.c
+ * @brief Move execution and unmaking logic with incremental board and Zobrist hash updates.
+ */
+
 #include "defs.h"
 #include <assert.h>
 
-#define HASH_PCE(pce, sq) (pos->posKey ^= (PieceKeys[(pce)][(sq)]))
-#define HASH_CA (pos->posKey ^= (CastleKeys[(pos->castlePerm)]))
-#define HASH_SIDE (pos->posKey ^= (SideKey))
-#define HASH_EP (pos->posKey ^= (PieceKeys[EMPTY][(pos->enPas)]))
+/**
+ * @name Incremental Zobrist Hashing Macros
+ * @{
+ */
+#define HASH_PCE(pce, sq) (pos->posKey ^= (PieceKeys[(pce)][(sq)])) /**< Toggles a piece's Zobrist key on a square. */
+#define HASH_CA (pos->posKey ^= (CastleKeys[(pos->castlePerm)]))     /**< Toggles the current castling permissions Zobrist key. */
+#define HASH_SIDE (pos->posKey ^= (SideKey))                        /**< Toggles the side-to-move Zobrist key. */
+#define HASH_EP (pos->posKey ^= (PieceKeys[EMPTY][(pos->enPas)]))    /**< Toggles the current en passant square Zobrist key. */
+/** @} */
 
 // clang-format off
+/** @brief Bitmask table for updating castling permissions indexed by 120-square origin/destination squares. */
 const int CastlePerm[120] = {
     15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
     15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
@@ -23,6 +34,11 @@ const int CastlePerm[120] = {
 };
 // clang-format on
 
+/**
+ * @brief Removes a piece from the specified square and updates board counters and hash key.
+ * @param sq Square index on the 120-square board.
+ * @param pos Pointer to the board state.
+ */
 static void ClearPiece(const int sq, S_BOARD *pos) {
     int pce = pos->pieces[sq];
     int col = PieceCol[pce];
@@ -59,6 +75,12 @@ static void ClearPiece(const int sq, S_BOARD *pos) {
     pos->pList[pce][t_pceNum] = pos->pList[pce][pos->pceNum[pce]];
 }
 
+/**
+ * @brief Places a piece on the specified square and updates board counters and hash key.
+ * @param sq Square index on the 120-square board.
+ * @param pos Pointer to the board state.
+ * @param pce Piece type to place on the square.
+ */
 static void AddPiece(const int sq, S_BOARD *pos, const int pce) {
     int col = PieceCol[pce];
 
@@ -82,6 +104,12 @@ static void AddPiece(const int sq, S_BOARD *pos, const int pce) {
     pos->pList[pce][pos->pceNum[pce]++] = sq;
 }
 
+/**
+ * @brief Moves a piece from one square to another and updates piece lists, bitboards, and hash key.
+ * @param from Origin square index on the 120-square board.
+ * @param to Destination square index on the 120-square board.
+ * @param pos Pointer to the board state.
+ */
 static void MovePiece(const int from, const int to, S_BOARD *pos) {
     int index = 0;
     int pce = pos->pieces[from];
@@ -108,6 +136,12 @@ static void MovePiece(const int from, const int to, S_BOARD *pos) {
     }
 }
 
+/**
+ * @brief Makes a move on the board and updates the game state accordingly.
+ * @param pos Pointer to the board state.
+ * @param move Bitpacked move integer to execute.
+ * @return TRUE if the move is legal, FALSE if it leaves the moving side's king in check.
+ */
 int MakeMove(S_BOARD *pos, int move) {
     int from = FROMSQ(move);
     int to = TOSQ(move);
@@ -204,6 +238,10 @@ int MakeMove(S_BOARD *pos, int move) {
     return TRUE;
 }
 
+/**
+ * @brief Undoes the last move made on the board and restores the previous game state.
+ * @param pos Pointer to the board state.
+ */
 void TakeMove(S_BOARD *pos) {
     pos->hisPly--;
     pos->ply--;
