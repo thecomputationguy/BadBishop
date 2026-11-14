@@ -1,0 +1,12 @@
+PROJECT_NAME           = "BadBishop"
+INPUT                  = src
+FILE_PATTERNS          = *.c *.h
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+XML_OUTPUT             = build/doxygen/xml
+QUIET                  = YES

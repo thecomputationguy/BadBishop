@@ -29,6 +29,9 @@ jobs:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: "docs/requirements.txt"
+    
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen
 
       - name: Install Sphinx dependencies
         run: pip install -r docs/requirements.txt
