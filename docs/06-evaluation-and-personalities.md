@@ -43,7 +43,7 @@ WhitePassedMask[D4] (Bitboard Forward Span)      IsolatedMask[D4] (Adjacent File
    * Uses 64-element lookup tables (`PawnTable`, `KnightTable`, `BishopTable`, `RookTable`). Black piece coordinates are flipped vertically via `Mirror64[sq64]`.
    * **King Phase Transition:** When opponent non-King material drops to or below `ENDGAME_MAT` (`1,350 cp`), the King switches from `KingO[64]` (penalizing center exposure, rewarding castled shelter) to `KingE[64]` (rewarding `+40 cp` centralization to support endgame pawns).
 3. **`pawnScore` (Bitboard Pawn Structure):**
-   * Penalizes isolated pawns (`-10 cp`) and rewards passed pawns by rank (`{0, 5, 10, 20, 35, 60, 100, 200}`).
+   * Penalizes isolated pawns (-10 cp) via  `IsolatedMask`, penalizes doubled/tripled pawns (-10 cp per extra pawn on a file) via `FileBBMask`, and rewards passed pawns by rank (`{0, 5, 10, 20, 35, 60, 100, 200}`).
 4. **`mobScore` (Open & Semi-Open File Control):**
    * Checks `(pos->pawns[BOTH] & FileBBMask[file]) == 0` for Rooks (`+10 cp` open, `+5 cp` semi-open) and Queens (`+5 cp` open, `+3 cp` semi-open).
 5. **`whiteKingSafety` & `blackKingSafety` (Middlegame King Shield):**
