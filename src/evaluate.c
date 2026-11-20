@@ -18,14 +18,17 @@ const S_PERSONALITY Personalities[3] = {
     {92,  110, 75,  145, 80,  185, -50}
 };
 
-static const int PawnIsolated = -10;                                   /**< Penalty for an isolated pawn. */
-static const int PawnPassed[8] = {0, 5, 10, 20, 35, 60, 100, 200};     /**< Passed pawn bonus indexed by rank. */
-static const int RookOpenFile = 10;                                    /**< Bonus for a rook on an open file. */
-static const int RookSemiOpenFile = 5;                                 /**< Bonus for a rook on a semi-open file. */
-static const int QueenOpenFile = 5;                                    /**< Bonus for a queen on an open file. */
-static const int QueenSemiOpenFile = 3;                                /**< Bonus for a queen on a semi-open file. */
-static const int BishopPair = 30;                                      /**< Bonus for having the bishop pair. */
-static const int KingOpenFilePenalty = 25;                             /**< Penalty for a king on an open/semi-open file in middlegame. */
+static const int PawnIsolated = -10; /**< Penalty for an isolated pawn. */
+const int PawnDoubled = -10;         /**< Penalty for a doubled pawn. */
+static const int PawnPassed[8] = {0,  5,  10,  20,
+                                  35, 60, 100, 200}; /**< Passed pawn bonus indexed by rank. */
+static const int RookOpenFile = 10;                  /**< Bonus for a rook on an open file. */
+static const int RookSemiOpenFile = 5;               /**< Bonus for a rook on a semi-open file. */
+static const int QueenOpenFile = 5;                  /**< Bonus for a queen on an open file. */
+static const int QueenSemiOpenFile = 3;              /**< Bonus for a queen on a semi-open file. */
+static const int BishopPair = 30;                    /**< Bonus for having the bishop pair. */
+static const int KingOpenFilePenalty =
+    25; /**< Penalty for a king on an open/semi-open file in middlegame. */
 
 /** @brief Endgame material threshold (1 Rook + 2 Minors + 2 Pawns = 1350). */
 #define ENDGAME_MAT 1350
@@ -212,6 +215,21 @@ int EvalPosition(const S_BOARD *pos) {
         }
         if ((BlackPassedMask[SQ64(sq)] & pos->pawns[WHITE]) == 0) {
             pawnScore -= PawnPassed[7 - RanksBrd[sq]];
+        }
+    }
+
+    // Doubled & Tripled Pawn Penalties (O(1) per file via FileBBMask)
+    for (int file = FILE_A; file <= FILE_H; ++file) {
+        U64 wFilePawns = pos->pawns[WHITE] & FileBBMask[file];
+        int wCount = CountBits(wFilePawns);
+        if (wCount > 1) {
+            pawnScore += (wCount - 1) * PawnDoubled;
+        }
+
+        U64 bFilePawns = pos->pawns[BLACK] & FileBBMask[file];
+        int bCount = CountBits(bFilePawns);
+        if (bCount > 1) {
+            pawnScore -= (bCount - 1) * PawnDoubled;
         }
     }
 
