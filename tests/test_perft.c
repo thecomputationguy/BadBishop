@@ -262,9 +262,15 @@ static void test_evaluation_and_personalities(void) {
     board->style = STYLE_SHARP;
     int evalSharp = EvalPosition(board);
 
-    // 3. Doubled Pawn Penalty Check (White has doubled c-pawns vs clean structure)
-    const char *clean_pawns_fen = "4k3/8/8/8/8/8/2P1P3/4K3 w - - 0 1";
-    const char *doubled_pawns_fen = "4k3/8/8/8/8/2P5/2P5/4K3 w - - 0 1";
+    // All three must recognize White's large advantage (> +300 cp), but with distinct weights
+    assert(evalBalanced > 300);
+    assert(evalPositional != evalBalanced);
+    assert(evalSharp != evalBalanced);
+    assert(GetContempt(board) == -50);
+
+    // 3. Doubled Pawn Penalty Check (b2+b3 doubled vs b2+f2 clean, blocked by b7/f7)
+    const char *clean_pawns_fen = "4k3/1p3p2/8/8/8/8/1P3P2/4K3 w - - 0 1";
+    const char *doubled_pawns_fen = "4k3/1p3p2/8/8/8/1P6/1P6/4K3 w - - 0 1";
 
     ParseFen(clean_pawns_fen, board);
     board->style = STYLE_BALANCED;
@@ -274,11 +280,6 @@ static void test_evaluation_and_personalities(void) {
     board->style = STYLE_BALANCED;
     int doubledEval = EvalPosition(board);
 
-    // All three must recognize White's large advantage (> +300 cp), but with distinct weights
-    assert(evalBalanced > 300);
-    assert(evalPositional != evalBalanced);
-    assert(evalSharp != evalBalanced);
-    assert(GetContempt(board) == -50);
     assert(doubledEval < cleanEval);
 
     printf("  -> Eval Scores (Balanced: %d cp, Positional: %d cp, Sharp: %d cp) PASSED\n",
