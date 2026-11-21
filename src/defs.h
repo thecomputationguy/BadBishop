@@ -54,12 +54,18 @@ typedef unsigned long long
  */
 #define FROMSQ(m) ((m) & 0x7F)      /**< Extracts the origin square from a packed move. */
 #define TOSQ(m) (((m) >> 7) & 0x7F) /**< Extracts the destination square from a packed move. */
-#define CAPTURED(m)                                                                                \
-    (((m) >> 14) & 0xF) /**< Extracts the captured piece type from a packed move.                  \
-                         */
-#define PROMOTED(m)                                                                                \
-    (((m) >> 20) & 0xF) /**< Extracts the promoted piece type from a packed move.                  \
-                         */
+
+/**
+ * @brief Extracts the captured piece type from a packed move.
+ * @param m Bitpacked move integer.
+ */
+#define CAPTURED(m) (((m) >> 14) & 0xF)
+
+/**
+ * @brief Extracts the promoted piece type from a packed move.
+ * @param m Bitpacked move integer.
+ */
+#define PROMOTED(m) (((m) >> 20) & 0xF)
 
 #define MFLAGEP 0x40000   /**< Move flag indicating an en passant capture. */
 #define MFLAGPS 0x80000   /**< Move flag indicating a two-square pawn start. */
@@ -105,12 +111,16 @@ typedef struct {
 #define INF_BOUND 30000 /**< Represents an infinite score bound for alpha-beta search. */
 #define ISMATE (INF_BOUND - MAXDEPTH) /**< Represents a checkmate score bound. */
 
-/* --- TRANSPOSITION TABLE DEFINITIONS --- */
+/**
+ * @name Transposition Table Definitions
+ * @{
+ */
 #ifdef PICO_BUILD
-#define HASH_ENTRIES 8192 // 192 KB for RP2350 (520 KB SRAM)
+#define HASH_ENTRIES 8192 /**< Number of transposition table entries (192 KB for RP2350, 520 KB SRAM). */
 #else
-#define HASH_ENTRIES 262144 // 6 MB for Desktop PC
+#define HASH_ENTRIES 262144 /**< Number of transposition table entries (6 MB for Desktop PC). */
 #endif
+/** @} */
 
 /**
  * @name io.c Prototypes
@@ -264,10 +274,14 @@ typedef struct {
     S_UNDO history[MAXGAMEMOVES]; /**< History of moves made in the game, storing undo information
                                      for each move. */
 
-    // Principal Variation & Move Ordering Tables
-    int PvArray[MAXDEPTH];
-    int searchHistory[13][BRD_SQ_NUM];
-    int searchKillers[2][MAXDEPTH];
+    /**
+     * @name Principal Variation & Move Ordering Tables
+     * @{
+     */
+    int PvArray[MAXDEPTH];              /**< Principal variation move array indexed by ply. */
+    int searchHistory[13][BRD_SQ_NUM];  /**< History heuristic scores indexed by [piece][toSquare]. */
+    int searchKillers[2][MAXDEPTH];     /**< Killer moves (2 slots per ply) that caused beta-cutoffs. */
+    /** @} */
 } S_BOARD;
 
 extern int Sq120ToSq64[BRD_SQ_NUM]; /**< Maps 120-square board to 64-square board. */
@@ -463,58 +477,143 @@ int EvalPosition(const S_BOARD *pos);
 int GetContempt(const S_BOARD *pos);
 /** @} */
 
-enum { HFNONE, HFALPHA, HFBETA, HFEXACT };
+/** @brief Transposition table entry bound flags. */
+enum {
+    HFNONE,  /**< No bound stored (uninitialized entry). */
+    HFALPHA, /**< Upper bound (alpha cutoff / fail-low). */
+    HFBETA,  /**< Lower bound (beta cutoff / fail-high). */
+    HFEXACT  /**< Exact score (PV node). */
+};
 
+/**
+ * @brief Single entry in the transposition table.
+ */
 typedef struct {
-    U64 posKey;
-    int move;
-    int score;
-    int depth;
-    int flags;
+    U64 posKey; /**< 64-bit Zobrist position key for collision verification. */
+    int move;   /**< Best or refutation move stored for this position. */
+    int score;  /**< Search score (mate scores adjusted by ply). */
+    int depth;  /**< Remaining search depth at which this entry was recorded. */
+    int flags;  /**< Bound type flag (HFNONE, HFALPHA, HFBETA, or HFEXACT). */
 } S_HASHENTRY;
 
+/**
+ * @brief Transposition table container and probe statistics.
+ */
 typedef struct {
-    S_HASHENTRY pTable[HASH_ENTRIES];
-    int numEntries;
-    int newWrite;
-    int overWrite;
-    int hit;
-    int cut;
+    S_HASHENTRY pTable[HASH_ENTRIES]; /**< Fixed-size array of transposition table entries. */
+    int numEntries;                   /**< Total capacity of pTable (HASH_ENTRIES). */
+    int newWrite;                     /**< Count of writes into previously empty entries. */
+    int overWrite;                    /**< Count of overwrites of occupied entries. */
+    int hit;                          /**< Count of hash probes matching position key and depth. */
+    int cut;                          /**< Count of search cutoffs returned directly from the table. */
 } S_HASHTABLE;
 
+/**
+ * @brief Search limits, timing state, and search statistics.
+ */
 typedef struct {
-    long starttime;
-    long stoptime;
-    int depth;
-    int depthset;
-    int timeset;
-    int movestogo;
-    int infinite;
+    long starttime; /**< Search start timestamp in milliseconds. */
+    long stoptime;  /**< Search deadline timestamp in milliseconds. */
+    int depth;      /**< Maximum iterative deepening search depth. */
+    int depthset;   /**< Flag indicating whether a fixed depth limit is active. */
+    int timeset;    /**< Flag indicating whether a time limit is active. */
+    int movestogo;  /**< Moves remaining until the next time control. */
+    int infinite;   /**< Flag indicating infinite analysis mode. */
 
-    long nodes;
+    long nodes; /**< Total number of nodes visited during the search. */
 
-    int quit;
-    int stopped;
+    int quit;    /**< Flag signaling the engine to terminate. */
+    int stopped; /**< Flag signaling the current search to abort immediately. */
 
-    float fh;
-    float fhf;
+    float fh;  /**< Total fail-high (beta cutoff) count for move-ordering metrics. */
+    float fhf; /**< Fail-high-first count (beta cutoff on the first legal move). */
 } S_SEARCHINFO;
 
-extern S_HASHTABLE HashTable[1];
+extern S_HASHTABLE HashTable[1]; /**< Global transposition table instance. */
 
-/* --- PVTABLE.C PROTOTYPES --- */
+/**
+ * @name pvtable.c Prototypes
+ * @{
+ */
+/**
+ * @brief Initializes a transposition table and clears all entries.
+ * @param table Pointer to the hash table to initialize.
+ */
 void InitHashTable(S_HASHTABLE *table);
-void ClearHashTable(S_HASHTABLE *table);
-void StoreHashEntry(S_BOARD *pos, const int move, int score, const int flags, const int depth);
-int ProbeHashEntry(S_BOARD *pos, int *move, int *score, int alpha, int beta, int depth);
-int ProbePvMove(const S_BOARD *pos);
-int GetPvLine(const int depth, S_BOARD *pos);
 
-/* --- SEARCH.C PROTOTYPES --- */
+/**
+ * @brief Clears all entries and resets statistics in a transposition table.
+ * @param table Pointer to the hash table to clear.
+ */
+void ClearHashTable(S_HASHTABLE *table);
+
+/**
+ * @brief Stores a position evaluation, best move, and bound in the transposition table.
+ * @param pos Pointer to the current board state.
+ * @param move Best move found for the position.
+ * @param score Evaluation score to store (mate scores adjusted relative to ply).
+ * @param flags Bound flag (HFALPHA, HFBETA, or HFEXACT).
+ * @param depth Remaining search depth in plies.
+ */
+void StoreHashEntry(S_BOARD *pos, const int move, int score, const int flags, const int depth);
+
+/**
+ * @brief Probes the transposition table for a usable score or best move hint.
+ * @param pos Pointer to the current board state.
+ * @param move Output pointer receiving the stored move if the key matches.
+ * @param score Output pointer receiving the usable score on a cutoff.
+ * @param alpha Current alpha bound.
+ * @param beta Current beta bound.
+ * @param depth Remaining search depth in plies.
+ * @return TRUE if a usable cutoff score was found, FALSE otherwise.
+ */
+int ProbeHashEntry(S_BOARD *pos, int *move, int *score, int alpha, int beta, int depth);
+
+/**
+ * @brief Probes the transposition table for the stored move of the current position.
+ * @param pos Pointer to the current board state.
+ * @return Stored move integer, or NOMOVE if not found.
+ */
+int ProbePvMove(const S_BOARD *pos);
+
+/**
+ * @brief Extracts the principal variation line from the transposition table into pos->PvArray.
+ * @param depth Maximum number of plies to extract.
+ * @param pos Pointer to the board state.
+ * @return Number of moves extracted into the principal variation line.
+ */
+int GetPvLine(const int depth, S_BOARD *pos);
+/** @} */
+
+/**
+ * @name search.c Prototypes
+ * @{
+ */
+/**
+ * @brief Initializes the MVV-LVA (Most Valuable Victim - Least Valuable Attacker) capture score table.
+ */
 void InitMvvLva(void);
+
+/**
+ * @brief Returns the current processor time in milliseconds.
+ * @return Elapsed time in milliseconds.
+ */
 long GetTimeMs(void);
+
+/**
+ * @brief Checks if the current board position has occurred previously within the 50-move window.
+ * @param pos Pointer to the board state.
+ * @return TRUE if a repetition is detected, FALSE otherwise.
+ */
 int IsRepetition(const S_BOARD *pos);
+
+/**
+ * @brief Searches the current position using iterative deepening alpha-beta and prints UCI info.
+ * @param pos Pointer to the board state.
+ * @param info Pointer to search parameters and statistics.
+ */
 void SearchPosition(S_BOARD *pos, S_SEARCHINFO *info);
+/** @} */
 
 /**
  * @brief Initializes all the necessary data structures for the chess engine.

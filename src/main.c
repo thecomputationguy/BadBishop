@@ -1,6 +1,17 @@
+/**
+ * @file main.c
+ * @brief Entry point and evaluation smoke-test harness for the BadBishop chess engine.
+ */
+
 #include "defs.h"
 #include <stdio.h>
 
+/**
+ * @brief Parses a FEN position, prints the board, and evaluates it across all personality styles.
+ * @param pos Pointer to the board state to populate and evaluate.
+ * @param label Descriptive label printed before the position output.
+ * @param fen Null-terminated FEN string representing the position to test.
+ */
 static void EvaluateAndPrint(S_BOARD *pos, const char *label, const char *fen) {
     ParseFen(fen, pos);
     printf("==================================================\n");
@@ -23,6 +34,10 @@ static void EvaluateAndPrint(S_BOARD *pos, const char *label, const char *fen) {
     printf("Sharp        : %+.2f (%+d cp)\n\n", sharp / 100.0, sharp);
 }
 
+/**
+ * @brief Initializes engine data structures and evaluates a suite of sample positions.
+ * @return Exit status code (0 on success).
+ */
 int main(void) {
     AllInit();
 

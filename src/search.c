@@ -1,12 +1,19 @@
+/**
+ * @file search.c
+ * @brief Iterative deepening alpha-beta search, quiescence search, and move ordering.
+ */
+
 #include "defs.h"
 #include <assert.h>
 #include <stdio.h>
 #include <time.h>
 
+static const int VictimScore[13] = {0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600}; /**< Base victim values for MVV-LVA capture ordering. */
+static int MvvLvaScores[13][13]; /**< Precomputed MVV-LVA scores indexed by [victim][attacker]. */
 
-static const int VictimScore[13] = {0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600};
-static int MvvLvaScores[13][13];
-
+/**
+ * @brief Initializes the MVV-LVA (Most Valuable Victim - Least Valuable Attacker) capture score table.
+ */
 void InitMvvLva(void) {
     int Attacker;
     int Victim;
@@ -18,16 +25,29 @@ void InitMvvLva(void) {
     }
 }
 
+/**
+ * @brief Returns the current processor time in milliseconds.
+ * @return Elapsed time in milliseconds.
+ */
 long GetTimeMs(void) {
     return (long)((clock() * 1000ULL) / CLOCKS_PER_SEC);
 }
 
+/**
+ * @brief Checks whether the allocated search time has expired and sets info->stopped if so.
+ * @param info Pointer to the search state and timing configuration.
+ */
 static void CheckUp(S_SEARCHINFO *info) {
     if (info->timeset == TRUE && GetTimeMs() > info->stoptime) {
         info->stopped = TRUE;
     }
 }
 
+/**
+ * @brief Performs selection sort step to swap the highest-scored remaining move into moveNum.
+ * @param moveNum Current index in the move list.
+ * @param list Pointer to the move list to reorder in place.
+ */
 static void PickNextMove(int moveNum, S_MOVELIST *list) {
     S_MOVE temp;
     int index = 0;
@@ -46,6 +66,12 @@ static void PickNextMove(int moveNum, S_MOVELIST *list) {
     list->moves[bestNum] = temp;
 }
 
+/**
+ * @brief Assigns move-ordering scores to all moves in a move list (PV, MVV-LVA captures, killers, history).
+ * @param pos Pointer to the board state.
+ * @param list Pointer to the move list whose entries will be scored.
+ * @param pvMove Principal variation move from the transposition table (or NOMOVE).
+ */
 static void ScoreMoves(const S_BOARD *pos, S_MOVELIST *list, int pvMove) {
     for (int i = 0; i < list->count; ++i) {
         int move = list->moves[i].move;
@@ -71,6 +97,11 @@ static void ScoreMoves(const S_BOARD *pos, S_MOVELIST *list, int pvMove) {
     }
 }
 
+/**
+ * @brief Checks if the current board position has occurred previously within the 50-move window.
+ * @param pos Pointer to the board state.
+ * @return TRUE if a repetition is detected, FALSE otherwise.
+ */
 int IsRepetition(const S_BOARD *pos) {
     int index = 0;
 
@@ -83,6 +114,11 @@ int IsRepetition(const S_BOARD *pos) {
     return FALSE;
 }
 
+/**
+ * @brief Resets search heuristics, transposition table counters, and search info prior to starting a search.
+ * @param pos Pointer to the board state.
+ * @param info Pointer to the search info structure to reset.
+ */
 static void ClearForSearch(S_BOARD *pos, S_SEARCHINFO *info) {
     int index = 0;
     int index2 = 0;
@@ -110,6 +146,14 @@ static void ClearForSearch(S_BOARD *pos, S_SEARCHINFO *info) {
     info->fhf = 0.0f;
 }
 
+/**
+ * @brief Searches capture sequences at leaf nodes to reach a quiet position and mitigate the horizon effect.
+ * @param alpha Lower bound score.
+ * @param beta Upper bound score.
+ * @param pos Pointer to the board state.
+ * @param info Pointer to search parameters and statistics.
+ * @return Quiescence evaluation score from the side-to-move's perspective.
+ */
 static int Quiescence(int alpha, int beta, S_BOARD *pos, S_SEARCHINFO *info) {
     assert(CheckBoard(pos));
 
@@ -185,6 +229,16 @@ static int Quiescence(int alpha, int beta, S_BOARD *pos, S_SEARCHINFO *info) {
     return alpha;
 }
 
+/**
+ * @brief Performs negamax alpha-beta search with transposition table probing, killers, and history heuristics.
+ * @param alpha Lower bound score.
+ * @param beta Upper bound score.
+ * @param depth Remaining search depth in plies.
+ * @param pos Pointer to the board state.
+ * @param info Pointer to search parameters and statistics.
+ * @param DoNull Whether null-move pruning is permitted in this subtree.
+ * @return Best score found within [alpha, beta] from the side-to-move's perspective.
+ */
 static int AlphaBeta(int alpha, int beta, int depth, S_BOARD *pos, S_SEARCHINFO *info, int DoNull) {
     assert(CheckBoard(pos));
     (void)DoNull; // Will be activated in Step 19B
@@ -291,6 +345,11 @@ static int AlphaBeta(int alpha, int beta, int depth, S_BOARD *pos, S_SEARCHINFO 
     return alpha;
 }
 
+/**
+ * @brief Searches the current position using iterative deepening alpha-beta and prints UCI info.
+ * @param pos Pointer to the board state.
+ * @param info Pointer to search parameters and statistics.
+ */
 void SearchPosition(S_BOARD *pos, S_SEARCHINFO *info) {
     int bestMove = NOMOVE;
     int bestScore = -INF_BOUND;
