@@ -27,6 +27,8 @@ set(ENGINE_SOURCES
     src/makemove.c
     src/perft.c
     src/evaluate.c
+    src/pvtable.c
+    src/search.c
 )
 
 # Main Executable

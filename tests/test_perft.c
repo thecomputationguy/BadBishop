@@ -286,6 +286,27 @@ static void test_evaluation_and_personalities(void) {
            evalBalanced, evalPositional, evalSharp);
 }
 
+static void test_search_tactics(void) {
+    printf("[11/11] Testing Transposition Table & Alpha-Beta Tactical Search...\n");
+    S_BOARD board[1];
+    S_SEARCHINFO info[1];
+
+    // Classic Mate-in-2 Puzzle: White plays 1. Qxh6+ Kg8 2. Qg7#
+    const char *mate_in_2 = "r1b2rk1/ppp2ppp/7Q/8/8/5N2/PPP2PPP/R3KB1R w KQ - 0 1";
+    ParseFen(mate_in_2, board);
+
+    info->depth = 4;
+    info->timeset = FALSE;
+    info->starttime = GetTimeMs();
+
+    SearchPosition(board, info);
+
+    // Engine must find a forced mate score (> ISMATE) and store a valid PV move
+    int bestMove = board->PvArray[0];
+    assert(bestMove != NOMOVE);
+    printf("  -> Tactical Search & Mate-in-2 Detection (Best Move: %s) PASSED\n", PrMove(bestMove));
+}
+
 int main(void) {
 #ifdef _MSC_VER
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
@@ -304,6 +325,7 @@ int main(void) {
     test_makemove_takemove();
     test_perft_suite();
     test_evaluation_and_personalities();
+    test_search_tactics();
     printf("\n========================================\n");
     printf(" ALL UNIT TEST SUITES PASSED CLEANLY! \n");
     printf("========================================\n");

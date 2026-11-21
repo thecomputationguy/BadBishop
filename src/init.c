@@ -7,8 +7,10 @@
 
 int Sq120ToSq64[BRD_SQ_NUM]; /**< Maps 120-square board to 64-square board. */
 int Sq64ToSq120[64];         /**< Maps 64-square board to 120-square board. */
-int FilesBrd[BRD_SQ_NUM];    /**< Maps each square on the 120-square board to its corresponding file (A-H). */
-int RanksBrd[BRD_SQ_NUM];    /**< Maps each square on the 120-square board to its corresponding rank (1-8). */
+int FilesBrd[BRD_SQ_NUM];    /**< Maps each square on the 120-square board to its corresponding file
+                                (A-H). */
+int RanksBrd[BRD_SQ_NUM];    /**< Maps each square on the 120-square board to its corresponding rank
+                                (1-8). */
 U64 FileBBMask[8];           /**< Bitboard masks for each file (A-H). */
 U64 RankBBMask[8];           /**< Bitboard masks for each rank (1-8). */
 U64 BlackPassedMask[64];     /**< Passed pawn masks for Black pawns on each 64-square index. */
@@ -176,4 +178,6 @@ void AllInit(void) {
     InitHashKeys();      // Initialize the Zobrist hash keys
     InitFilesRanksBrd(); // Initialize the file-rank bitboard
     InitEvalMasks();     // Initialize bitboard eval masks
+    InitMvvLva(); // Initialize the Most Valuable Victim - Least Valuable Attacker (MVV-LVA) table
+    InitHashTable(HashTable); // Initialize the hash table
 }
