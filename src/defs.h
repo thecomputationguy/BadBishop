@@ -116,9 +116,11 @@ typedef struct {
  * @{
  */
 #ifdef PICO_BUILD
-#define HASH_ENTRIES 8192 /**< Number of transposition table entries (192 KB for RP2350, 520 KB SRAM). */
+#define MAX_HASH_ENTRIES 8192 /* 192 KB static ceiling for RP2350 */
+#define DEFAULT_HASH_MB 1
 #else
-#define HASH_ENTRIES 262144 /**< Number of transposition table entries (6 MB for Desktop PC). */
+#define MAX_HASH_ENTRIES 4194304 /* 4,194,304 * 24 B = 96 MB static ceiling for PC */
+#define DEFAULT_HASH_MB 16
 #endif
 /** @} */
 
@@ -278,9 +280,10 @@ typedef struct {
      * @name Principal Variation & Move Ordering Tables
      * @{
      */
-    int PvArray[MAXDEPTH];              /**< Principal variation move array indexed by ply. */
-    int searchHistory[13][BRD_SQ_NUM];  /**< History heuristic scores indexed by [piece][toSquare]. */
-    int searchKillers[2][MAXDEPTH];     /**< Killer moves (2 slots per ply) that caused beta-cutoffs. */
+    int PvArray[MAXDEPTH]; /**< Principal variation move array indexed by ply. */
+    int searchHistory[13]
+                     [BRD_SQ_NUM];  /**< History heuristic scores indexed by [piece][toSquare]. */
+    int searchKillers[2][MAXDEPTH]; /**< Killer moves (2 slots per ply) that caused beta-cutoffs. */
     /** @} */
 } S_BOARD;
 
@@ -500,12 +503,13 @@ typedef struct {
  * @brief Transposition table container and probe statistics.
  */
 typedef struct {
-    S_HASHENTRY pTable[HASH_ENTRIES]; /**< Fixed-size array of transposition table entries. */
-    int numEntries;                   /**< Total capacity of pTable (HASH_ENTRIES). */
-    int newWrite;                     /**< Count of writes into previously empty entries. */
-    int overWrite;                    /**< Count of overwrites of occupied entries. */
-    int hit;                          /**< Count of hash probes matching position key and depth. */
-    int cut;                          /**< Count of search cutoffs returned directly from the table. */
+    S_HASHENTRY *pTable; /**< Pointer to the array of hash entries. */
+    int numEntries;      /**< Total number of entries allocated in the table. */
+    U64 mask;            /**< Bitmask for indexing into the table (numEntries - 1). */
+    int newWrite;        /**< Count of new entries written to the table. */
+    int overWrite;       /**< Count of existing entries overwritten in the table. */
+    int hit;             /**< Count of successful probes that found a matching position key. */
+    int cut;             /**< Count of probes that resulted in a usable cutoff score. */
 } S_HASHTABLE;
 
 /**
@@ -538,8 +542,9 @@ extern S_HASHTABLE HashTable[1]; /**< Global transposition table instance. */
 /**
  * @brief Initializes a transposition table and clears all entries.
  * @param table Pointer to the hash table to initialize.
+ * @param mb Size of the hash table in megabytes.
  */
-void InitHashTable(S_HASHTABLE *table);
+extern void InitHashTable(S_HASHTABLE *table, int mb);
 
 /**
  * @brief Clears all entries and resets statistics in a transposition table.
@@ -590,7 +595,8 @@ int GetPvLine(const int depth, S_BOARD *pos);
  * @{
  */
 /**
- * @brief Initializes the MVV-LVA (Most Valuable Victim - Least Valuable Attacker) capture score table.
+ * @brief Initializes the MVV-LVA (Most Valuable Victim - Least Valuable Attacker) capture score
+ * table.
  */
 void InitMvvLva(void);
 
@@ -614,6 +620,10 @@ int IsRepetition(const S_BOARD *pos);
  */
 void SearchPosition(S_BOARD *pos, S_SEARCHINFO *info);
 /** @} */
+
+extern int ParseMove(const char *ptrChar, S_BOARD *pos);
+
+extern void UciLoop(S_BOARD *pos, S_SEARCHINFO *info);
 
 /**
  * @brief Initializes all the necessary data structures for the chess engine.

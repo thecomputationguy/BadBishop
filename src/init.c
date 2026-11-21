@@ -179,5 +179,5 @@ void AllInit(void) {
     InitFilesRanksBrd(); // Initialize the file-rank bitboard
     InitEvalMasks();     // Initialize bitboard eval masks
     InitMvvLva(); // Initialize the Most Valuable Victim - Least Valuable Attacker (MVV-LVA) table
-    InitHashTable(HashTable); // Initialize the hash table
+    InitHashTable(HashTable, DEFAULT_HASH_MB); // Initialize the hash table
 }

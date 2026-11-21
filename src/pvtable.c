@@ -7,13 +7,15 @@
 #include <assert.h>
 #include <stdio.h>
 
-S_HASHTABLE HashTable[1]; /**< Global transposition table instance. */
+static S_HASHENTRY
+    HashPool[MAX_HASH_ENTRIES]; /**< Static memory pool for transposition table entries. */
+S_HASHTABLE HashTable[1];       /**< Global transposition table instance. */
 
 /**
  * @brief Computes the transposition table bucket index for a Zobrist position key.
  * @param key 64-bit Zobrist position key.
  */
-#define HASH_INDEX(key) ((key) & (HASH_ENTRIES - 1))
+#define HASH_INDEX(key) ((key) & HashTable->mask)
 
 /**
  * @brief Verifies whether a packed move is legal in the current board position.
@@ -74,7 +76,7 @@ int GetPvLine(const int depth, S_BOARD *pos) {
  * @param table Pointer to the hash table to clear.
  */
 void ClearHashTable(S_HASHTABLE *table) {
-    for (int i = 0; i < HASH_ENTRIES; ++i) {
+    for (int i = 0; i < table->numEntries; ++i) {
         table->pTable[i].posKey = 0ULL;
         table->pTable[i].move = NOMOVE;
         table->pTable[i].depth = 0;
@@ -91,8 +93,25 @@ void ClearHashTable(S_HASHTABLE *table) {
  * @brief Initializes a transposition table and clears all entries.
  * @param table Pointer to the hash table to initialize.
  */
-void InitHashTable(S_HASHTABLE *table) {
-    table->numEntries = HASH_ENTRIES;
+void InitHashTable(S_HASHTABLE *table, int mb) {
+    if (mb < 1) mb = 1;
+
+    U64 maxBytes = (U64)mb * 1024ULL * 1024ULL;
+    int targetEntries = (int)(maxBytes / sizeof(S_HASHENTRY));
+
+    if (targetEntries > MAX_HASH_ENTRIES) {
+        targetEntries = MAX_HASH_ENTRIES;
+    }
+
+    /* Round down to the largest power of two <= targetEntries for O(1) bitmasking */
+    int pow2Entries = 1;
+    while ((pow2Entries << 1) <= targetEntries) {
+        pow2Entries <<= 1;
+    }
+
+    table->pTable = HashPool;
+    table->numEntries = pow2Entries;
+    table->mask = (U64)(pow2Entries - 1);
     ClearHashTable(table);
 }
 

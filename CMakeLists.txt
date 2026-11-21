@@ -29,6 +29,7 @@ set(ENGINE_SOURCES
     src/evaluate.c
     src/pvtable.c
     src/search.c
+    src/uci.c
 )
 
 # Main Executable

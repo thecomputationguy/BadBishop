@@ -307,6 +307,62 @@ static void test_search_tactics(void) {
     printf("  -> Tactical Search & Mate-in-2 Detection (Best Move: %s) PASSED\n", PrMove(bestMove));
 }
 
+static void test_dynamic_tt_and_parsemove(void) {
+    printf("[11/11] Testing Dynamic Hash Table & UCI ParseMove...\n");
+    S_BOARD board[1];
+
+    // 1. Dynamic Transposition Table Sizing & Bitmask Verification
+    InitHashTable(HashTable, 1);
+    assert(HashTable->pTable != NULL);
+    assert(HashTable->numEntries > 0);
+    // Verify numEntries is an exact power of two and mask == numEntries - 1
+    assert((HashTable->numEntries & (HashTable->numEntries - 1)) == 0);
+    assert(HashTable->mask == (U64)(HashTable->numEntries - 1));
+
+#ifndef PICO_BUILD
+    int entries1MB = HashTable->numEntries;
+    InitHashTable(HashTable, 4);
+    assert(HashTable->numEntries == entries1MB * 4);
+    assert(HashTable->mask == (U64)(HashTable->numEntries - 1));
+#endif
+
+    // Restore default hash table size
+    InitHashTable(HashTable, DEFAULT_HASH_MB);
+
+    // 2. ParseMove: Standard Opening Moves & Illegal Move Rejection
+    ParseFen(START_FEN, board);
+    int e2e4 = ParseMove("e2e4", board);
+    assert(e2e4 != NOMOVE);
+    assert(FROMSQ(e2e4) == E2 && TOSQ(e2e4) == E4);
+
+    assert(ParseMove("e2e5", board) == NOMOVE); // Illegal push
+    assert(ParseMove("e7e5", board) == NOMOVE); // Wrong side to move
+    assert(ParseMove("zzzz", board) == NOMOVE); // Malformed coordinate
+
+    // 3. ParseMove: Castling Moves
+    ParseFen("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", board);
+    int castleK = ParseMove("e1g1", board);
+    int castleQ = ParseMove("e1c1", board);
+    assert(castleK != NOMOVE && (castleK & MFLAGCA));
+    assert(castleQ != NOMOVE && (castleQ & MFLAGCA));
+
+    // 4. ParseMove: All Four Promotion Types
+    ParseFen("8/P7/8/8/8/8/8/k6K w - - 0 1", board);
+    int promQ = ParseMove("a7a8q", board);
+    int promR = ParseMove("a7a8r", board);
+    int promB = ParseMove("a7a8b", board);
+    int promN = ParseMove("a7a8n", board);
+
+    assert(promQ != NOMOVE && PROMOTED(promQ) == wQ);
+    assert(promR != NOMOVE && PROMOTED(promR) == wR);
+    assert(promB != NOMOVE && PROMOTED(promB) == wB);
+    assert(promN != NOMOVE && PROMOTED(promN) == wN);
+    assert(ParseMove("a7a8", board) == NOMOVE); // Missing promotion piece char
+
+    printf("  -> Dynamic TT (Entries: %d, Mask: 0x%llX) & ParseMove PASSED\n",
+           HashTable->numEntries, (unsigned long long)HashTable->mask);
+}
+
 int main(void) {
 #ifdef _MSC_VER
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
@@ -326,6 +382,8 @@ int main(void) {
     test_perft_suite();
     test_evaluation_and_personalities();
     test_search_tactics();
+    test_evaluation_and_personalities();
+    test_dynamic_tt_and_parsemove();
     printf("\n========================================\n");
     printf(" ALL UNIT TEST SUITES PASSED CLEANLY! \n");
     printf("========================================\n");
