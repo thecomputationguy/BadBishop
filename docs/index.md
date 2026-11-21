@@ -69,5 +69,6 @@ sphinx-build -b html docs build/docs
 05-makemove-and-perft
 06-evaluation-and-personalities
 07-transposition-and-search
+08-uci-protocol
 api/library_root
 ```
