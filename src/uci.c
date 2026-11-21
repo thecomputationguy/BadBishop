@@ -10,7 +10,8 @@
 
 #define INPUTBUFFER 4096 /**< Maximum line buffer size for reading UCI commands from stdin. */
 
-static int currentStyle = STYLE_BALANCED; /**< Active engine personality persisted across new positions. */
+static int currentStyle =
+    STYLE_BALANCED; /**< Active engine personality persisted across new positions. */
 
 /**
  * @brief Parses a UCI "go" command, configures time/depth limits, and starts the search.
@@ -144,7 +145,7 @@ void UciLoop(S_BOARD *pos, S_SEARCHINFO *info) {
         } else if (strncmp(line, "setoption", 9) == 0) {
             ParseSetOption(line, pos);
         } else if (strncmp(line, "uci", 3) == 0) {
-            printf("id name BadBishop\n");
+            printf("id name BadBishop 0.1.0\n");
             printf("id author BadBishop Contributors\n");
             printf("option name Hash type spin default %d min 1 max 96\n", DEFAULT_HASH_MB);
             printf("option name Personality type combo default Balanced var Balanced var "
