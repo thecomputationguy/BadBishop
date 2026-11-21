@@ -1,70 +1,46 @@
-/**
- * @file main.c
- * @brief Entry point and evaluation smoke-test harness for the BadBishop chess engine.
- */
-
 #include "defs.h"
 #include <stdio.h>
+#include <string.h>
 
-/**
- * @brief Parses a FEN position, prints the board, and evaluates it across all personality styles.
- * @param pos Pointer to the board state to populate and evaluate.
- * @param label Descriptive label printed before the position output.
- * @param fen Null-terminated FEN string representing the position to test.
- */
-static void EvaluateAndPrint(S_BOARD *pos, const char *label, const char *fen) {
+
+static void RunMateIn2Test(S_BOARD *pos, const char *name, const char *fen,
+                           const char *expectedMove) {
+    ClearHashTable(HashTable);
     ParseFen(fen, pos);
+
+    S_SEARCHINFO info[1];
+    memset(info, 0, sizeof(S_SEARCHINFO));
+    info->depth = 5;
+    info->timeset = FALSE;
+    info->starttime = GetTimeMs();
+
     printf("==================================================\n");
-    printf("Position: %s\n", label);
+    printf("Puzzle: %s\n", name);
     PrintBoard(pos);
 
-    pos->style = STYLE_BALANCED;
-    int bal = EvalPosition(pos);
+    SearchPosition(pos, info);
 
-    pos->style = STYLE_POSITIONAL;
-    int positional = EvalPosition(pos);
-
-    pos->style = STYLE_SHARP;
-    int sharp = EvalPosition(pos);
-
-    const char *stm = (pos->side == WHITE) ? "White" : "Black";
-    printf("Side to Move : %s\n", stm);
-    printf("Balanced     : %+.2f (%+d cp)\n", bal / 100.0, bal);
-    printf("Positional   : %+.2f (%+d cp)\n", positional / 100.0, positional);
-    printf("Sharp        : %+.2f (%+d cp)\n\n", sharp / 100.0, sharp);
+    const char *found = PrMove(pos->PvArray[0]);
+    printf("Expected: %s | Engine Found: %s -> %s\n\n", expectedMove, found,
+           (strcmp(found, expectedMove) == 0) ? "PASS" : "FAIL");
 }
 
-/**
- * @brief Initializes engine data structures and evaluates a suite of sample positions.
- * @return Exit status code (0 on success).
- */
 int main(void) {
     AllInit();
 
     S_BOARD board[1];
 
-    // 1. Symmetric Starting Position (Expected: 0 cp across all styles)
-    EvaluateAndPrint(board, "1. Starting Position (Symmetric)", START_FEN);
+    RunMateIn2Test(board, "1. Quiet Back-Rank Queen Sacrifice",
+                   "4r1k1/5ppp/8/8/8/8/3Q1PPP/3R2K1 w - - 0 1", "d2d8");
 
-    // 2. White Advantage: Extra Bishop, Passed d5 Pawn, Open Black King File
-    EvaluateAndPrint(board, "2. White Tactical & Material Advantage",
-                     "r1bq1rk1/ppp2p1p/2n5/3P4/2B1N3/8/PPP2PPP/R1BQ1RK1 w - - 0 1");
+    RunMateIn2Test(board, "2. Classic Smothered Mate", "5r1k/6pp/7N/8/8/1Q6/6PP/7K w - - 0 1",
+                   "b3g8");
 
-    // 3. Passed Pawn Race (White has a dangerous 6th-rank passed pawn on e6)
-    EvaluateAndPrint(board, "3. Passed Pawn on e6 (Positional vs Sharp weighting)",
-                     "4k3/pp3ppp/4P3/8/8/8/PP3PPP/4K3 w - - 0 1");
+    RunMateIn2Test(board, "3. Arabian Rook & Knight Mate", "7k/5p2/5N1p/8/8/8/6PP/4R2K w - - 0 1",
+                   "e1e8");
 
-    // 4. King Endgame Centralization (White King centralized on d4 vs Black King passive on a8)
-    EvaluateAndPrint(board, "4. Endgame King Activity (KingE PST active)",
-                     "k7/8/8/8/3K4/8/8/8 w - - 0 1");
+    RunMateIn2Test(board, "4. Black Double-Check Mate", "6k1/5pp1/2q4p/8/8/5p1P/5PPK/6r1 b - - 0 1",
+                   "g1g2");
 
-    // 5. Black to Move with Structural Weakness (Black has isolated pawns, White has Bishop Pair)
-    EvaluateAndPrint(board,
-                     "5. Black to Move vs Bishop Pair & Isolated Pawns (Expect negative score)",
-                     "r1bqk2r/p1p1p1p1/8/8/8/2B2B2/PPP2PPP/R2QK2R b KQkq - 0 1");
-
-    // 6. Locked Closed Center (Equal material, 0 open files, structural advantage for White)
-    EvaluateAndPrint(board, "6. Closed Positional Structure (Locked Center & Pawn Islands)",
-                     "r2q1rk1/pp1n1ppp/2pbpn2/3p4/2PPp3/2N1PNP1/PP1B1PBP/R2Q1RK1 w - - 0 1");
     return 0;
 }
