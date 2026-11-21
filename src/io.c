@@ -73,6 +73,12 @@ void PrintMoveList(const S_MOVELIST *list) {
     printf("MoveList Total %d Moves:\n\n", list->count);
 }
 
+/**
+ * @brief Parses a coordinate algebraic move string (e.g., "e2e4" or "e7e8q") and matches it against legal moves.
+ * @param ptrChar Pointer to the coordinate move string (at least 4 characters, plus optional promotion piece).
+ * @param pos Pointer to the current board state.
+ * @return Bitpacked matching move integer, or NOMOVE if invalid or not found.
+ */
 int ParseMove(const char *ptrChar, S_BOARD *pos) {
     if (ptrChar[0] < 'a' || ptrChar[0] > 'h') return NOMOVE;
     if (ptrChar[1] < '1' || ptrChar[1] > '8') return NOMOVE;

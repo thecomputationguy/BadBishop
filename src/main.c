@@ -1,7 +1,16 @@
+/**
+ * @file main.c
+ * @brief Entry point for the BadBishop UCI chess engine.
+ */
+
 #include "defs.h"
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * @brief Initializes engine tables, sets the starting position, and enters the UCI command loop.
+ * @return Exit status code (0 on success).
+ */
 int main(void) {
     AllInit();
 

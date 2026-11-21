@@ -6,19 +6,19 @@ BadBishop's search engine combines **Iterative Deepening**, **Negamax Alpha-Beta
 
 ---
 
-## 1. Zero-Malloc Transposition Table (`pvtable.c`)
+### Dynamic Zero-Malloc Transposition Table (`src/pvtable.c`)
 
-To guarantee zero heap fragmentation and deterministic memory usage on embedded targets, `HashTable` is allocated statically at compile time and scaled via `PICO_BUILD`:
+To support runtime hash resizing via UCI (`setoption name Hash value <MB>`) without dynamic heap allocation (`malloc`), BadBishop allocates a compile-time static pool (`HashPool[MAX_HASH_ENTRIES]`) and slices active power-of-two capacity at runtime:
 
-| Build Target | Macro | `HASH_ENTRIES` | Entry Size (`S_HASHENTRY`) | Total Static RAM |
-| :--- | :--- | :---: | :---: | :---: |
-| **Raspberry Pi Pico 2 (RP2350)** | `-DPICO_BUILD` | $8,192$ ($2^{13}$) | `24 B` | **`196,608 B` (`192 KB`)** |
-| **Desktop PC (x86-64 / ARM64)** | *(Default)* | $262,144$ ($2^{18}$) | `24 B` | **`6,291,456 B` (`6 MB`)** |
+| Build Target | Macro | Static Pool Ceiling | Default Active Size |
+| :--- | :--- | :---: | :---: |
+| **Desktop (PC / macOS)** | `MAX_HASH_ENTRIES = 4194304` | `96 MB` | `16 MB` (`DEFAULT_HASH_MB`) |
+| **Embedded (`PICO_BUILD`)** | `MAX_HASH_ENTRIES = 8192` | `192 KB` | `1 MB` (`DEFAULT_HASH_MB`) |
 
-### Power-of-Two Indexing & Bound Flags
-Because `HASH_ENTRIES` is a power of two, `HASH_INDEX(key)` maps any 64-bit `posKey` to a table slot using a single bitwise AND:
+* **Power-of-Two Bitmask Indexing:** `InitHashTable(S_HASHTABLE *table, int mb)` clamps the requested megabytes to `MAX_HASH_ENTRIES`, rounds `numEntries` down to the largest power of two, and sets `table->mask = (U64)(numEntries - 1)`.
+* **$O(1)$ Slot Lookup:** `HASH_INDEX(key)` computes `key & HashTable->mask` in a single CPU cycle without modulo division.
 ```c
-#define HASH_INDEX(key) ((key) & (HASH_ENTRIES - 1))
+#define HASH_INDEX(key) ((key) & HashTable->mask)
 ```
 Each entry stores one of three bound types (`flags`):
 * **`HFEXACT`:** True minimax score inside $(\alpha, \beta)$ ($s > \alpha$ and $s < \beta$).

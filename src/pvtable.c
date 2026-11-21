@@ -92,6 +92,7 @@ void ClearHashTable(S_HASHTABLE *table) {
 /**
  * @brief Initializes a transposition table and clears all entries.
  * @param table Pointer to the hash table to initialize.
+ * @param mb Size of the hash table in megabytes.
  */
 void InitHashTable(S_HASHTABLE *table, int mb) {
     if (mb < 1) mb = 1;

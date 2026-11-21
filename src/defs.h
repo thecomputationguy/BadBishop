@@ -116,11 +116,11 @@ typedef struct {
  * @{
  */
 #ifdef PICO_BUILD
-#define MAX_HASH_ENTRIES 8192 /* 192 KB static ceiling for RP2350 */
-#define DEFAULT_HASH_MB 1
+#define MAX_HASH_ENTRIES 8192 /**< 192 KB static ceiling for RP2350 */
+#define DEFAULT_HASH_MB 1     /**< Default transposition table size in megabytes for RP2350. */
 #else
-#define MAX_HASH_ENTRIES 4194304 /* 4,194,304 * 24 B = 96 MB static ceiling for PC */
-#define DEFAULT_HASH_MB 16
+#define MAX_HASH_ENTRIES 4194304 /**< 4,194,304 * 24 B = 96 MB static ceiling for PC */
+#define DEFAULT_HASH_MB 16       /**< Default transposition table size in megabytes for PC. */
 #endif
 /** @} */
 
@@ -621,9 +621,25 @@ int IsRepetition(const S_BOARD *pos);
 void SearchPosition(S_BOARD *pos, S_SEARCHINFO *info);
 /** @} */
 
+/**
+ * @brief Parses a coordinate algebraic move string (e.g., "e2e4" or "e7e8q") and matches it against legal moves.
+ * @param ptrChar Pointer to the coordinate move string (at least 4 characters, plus optional promotion piece).
+ * @param pos Pointer to the current board state.
+ * @return Bitpacked matching move integer, or NOMOVE if invalid or not found.
+ */
 extern int ParseMove(const char *ptrChar, S_BOARD *pos);
 
+/**
+ * @name uci.c Prototypes
+ * @{
+ */
+/**
+ * @brief Runs the main UCI input loop reading commands from stdin and dispatching handlers.
+ * @param pos Pointer to the board state.
+ * @param info Pointer to the search info structure.
+ */
 extern void UciLoop(S_BOARD *pos, S_SEARCHINFO *info);
+/** @} */
 
 /**
  * @brief Initializes all the necessary data structures for the chess engine.

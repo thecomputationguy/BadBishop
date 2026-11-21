@@ -1,13 +1,23 @@
+/**
+ * @file uci.c
+ * @brief Universal Chess Interface (UCI) protocol command loop and option parsing.
+ */
+
 #include "defs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#define INPUTBUFFER 4096 /**< Maximum line buffer size for reading UCI commands from stdin. */
 
-#define INPUTBUFFER 4096
+static int currentStyle = STYLE_BALANCED; /**< Active engine personality persisted across new positions. */
 
-static int currentStyle = STYLE_BALANCED;
-
+/**
+ * @brief Parses a UCI "go" command, configures time/depth limits, and starts the search.
+ * @param line Null-terminated UCI "go" command string.
+ * @param info Pointer to search parameters and timing state.
+ * @param pos Pointer to the current board state.
+ */
 static void ParseGo(const char *line, S_SEARCHINFO *info, S_BOARD *pos) {
     int depth = -1, movestogo = 30, movetime = -1;
     int time = -1, inc = 0;
@@ -41,6 +51,11 @@ static void ParseGo(const char *line, S_SEARCHINFO *info, S_BOARD *pos) {
     SearchPosition(pos, info);
 }
 
+/**
+ * @brief Parses a UCI "position" command ("startpos" or "fen") and applies any trailing moves.
+ * @param lineIn Null-terminated UCI "position" command string.
+ * @param pos Pointer to the board state to update.
+ */
 static void ParsePosition(const char *lineIn, S_BOARD *pos) {
     lineIn += 9; /* Skip "position " */
     const char *ptrChar = lineIn;
@@ -77,6 +92,11 @@ static void ParsePosition(const char *lineIn, S_BOARD *pos) {
     }
 }
 
+/**
+ * @brief Parses a UCI "setoption" command to configure Hash size or engine Personality.
+ * @param line Null-terminated UCI "setoption" command string.
+ * @param pos Pointer to the board state whose personality style may be updated.
+ */
 static void ParseSetOption(const char *line, S_BOARD *pos) {
     if (strstr(line, "name Hash value")) {
         const char *valPtr = strstr(line, "value");
@@ -96,6 +116,11 @@ static void ParseSetOption(const char *line, S_BOARD *pos) {
     }
 }
 
+/**
+ * @brief Runs the main UCI input loop reading commands from stdin and dispatching handlers.
+ * @param pos Pointer to the board state.
+ * @param info Pointer to the search info structure.
+ */
 void UciLoop(S_BOARD *pos, S_SEARCHINFO *info) {
     /* Disable stdout buffering so Arena receives uciok/bestmove immediately */
     setvbuf(stdin, NULL, _IONBF, 0);
